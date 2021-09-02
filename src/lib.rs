@@ -1,6 +1,5 @@
 use neon::prelude::*;
 
-mod utils;
 mod error;
 mod cryptos;
 mod browsers;
