@@ -1,0 +1,30 @@
+[package]
+name = "credential-extractor"
+version = "0.0.1"
+authors = ["rumblefrog <contact@zhenyangli.me>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+dirs = "3"
+thiserror = "1"
+windows = "0.19"
+
+[dependencies.rusqlite]
+version = "0.25"
+features = ["bundled"]
+
+[dependencies.neon]
+git = "https://github.com/neon-bindings/neon"
+branch = "main"
+default-features = false
+features = ["napi-6", "event-queue-api", "try-catch-api"]
+
+[build-dependencies]
+windows = "0.19"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1

@@ -1,0 +1,11 @@
+# Rust builds
+/target
+
+# JS deps & builds
+node_modules
+dist
+
+# Cargo artifact copy
+*.node
+build
+.DS_Store
