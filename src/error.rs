@@ -5,6 +5,9 @@ pub enum ExtractorError {
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 
+    #[error("JSON error: {0}")]
+    JsonError(#[from] serde_json::Error),
+
     #[error("Sqlite error: {0}")]
     SqliteError(#[from] rusqlite::Error),
 
