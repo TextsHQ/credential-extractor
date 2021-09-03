@@ -54,7 +54,7 @@ fn browser_directories() -> ExtractorResult<Vec<PathBuf>> {
     Ok(existing_paths)
 }
 
-pub fn search_credentials(url: String) -> ExtractorResult<Vec<Credential>> {
+pub fn search_login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
     let mut credentials = Vec::new();
 
     for path in browser_directories()? {
@@ -87,7 +87,10 @@ pub fn search_credentials(url: String) -> ExtractorResult<Vec<Credential>> {
                 return Err(ExtractorError::Win32CannotDecryptKey);
             }
 
-            GenericArray::from_slice(std::slice::from_raw_parts(key_output.pbData, key_output.cbData as usize))
+            GenericArray::from_slice(std::slice::from_raw_parts(
+                key_output.pbData,
+                key_output.cbData as usize,
+            ))
         };
 
         let cipher = Aes256Gcm::new(encryption_key);
@@ -97,7 +100,9 @@ pub fn search_credentials(url: String) -> ExtractorResult<Vec<Credential>> {
             OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )?;
 
-        let mut stmt = login_data.prepare_cached("SELECT origin_url, username_value, password_value FROM logins WHERE origin_url = ?")?;
+        let mut stmt = login_data.prepare_cached(
+            "SELECT origin_url, username_value, password_value FROM logins WHERE origin_url = ?",
+        )?;
 
         let mut rows = stmt.query(&[&url])?;
 
@@ -115,13 +120,15 @@ pub fn search_credentials(url: String) -> ExtractorResult<Vec<Credential>> {
             // 3 + (96/8) = 15
             let nonce = GenericArray::from_slice(&password_value[3..15]);
 
-            let decrypted_password = cipher.decrypt(nonce, &password_value[15..])
+            let decrypted_password = cipher
+                .decrypt(nonce, &password_value[15..])
                 .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?;
 
             credentials.push(Credential {
                 url: origin_url,
                 username: username_value,
-                password: String::from_utf8(decrypted_password).map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?,
+                password: String::from_utf8(decrypted_password)
+                    .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?,
             });
         }
     }

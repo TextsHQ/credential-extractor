@@ -1,5 +1,16 @@
 const {
-    pullChromeCredentials,
+    searchLoginCredentials,
 } = require('../index.node');
 
-pullChromeCredentials();
+export interface Credential {
+    url: string;
+
+    username: string;
+
+    password: string;
+}
+
+export function searchBrowserLoginCredentials(url: string): Credential[] {
+    return searchLoginCredentials(url);
+}
+

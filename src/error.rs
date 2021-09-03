@@ -14,9 +14,6 @@ pub enum ExtractorError {
     #[error("Sqlite error: {0}")]
     SqliteError(#[from] rusqlite::Error),
 
-    #[error("Cannot find home directory")]
-    CannotFindHomeDirectory,
-
     #[error("Cannot find local data directory")]
     CannotFindLocalDataDirectory,
 
