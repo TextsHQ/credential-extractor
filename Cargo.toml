@@ -37,6 +37,9 @@ aes-gcm = "0.9"
 [target.'cfg(windows)'.build-dependencies]
 windows = "0.19"
 
+[target.'cfg(macos)'.dependencies]
+security-framework = "2.4"
+
 [profile.release]
 lto = "fat"
 codegen-units = 1
