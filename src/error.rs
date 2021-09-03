@@ -17,9 +17,11 @@ pub enum ExtractorError {
     #[error("Cannot find local data directory")]
     CannotFindLocalDataDirectory,
 
+    #[cfg(target_os = "windows")]
     #[error("Win32 cannot decrypt key")]
     Win32CannotDecryptKey,
 
+    #[cfg(target_os = "windows")]
     #[error("Unable to decrypt key using AES-GCM")]
     AESGCMCannotDecryptPassword,
 }

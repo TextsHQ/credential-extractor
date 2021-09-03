@@ -29,7 +29,7 @@ pub struct OSCrypt {
     pub encrypted_key: String,
 }
 
-const KNOWN_BROWSER_PATHS: &'static [&'static str] = &[
+const KNOWN_BROWSER_PATHS: &[&str] = &[
     "Google\\Chrome",
     // "Google\\Chrome SxS",
     "Microsoft\\Edge",
