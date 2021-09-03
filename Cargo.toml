@@ -38,6 +38,8 @@ aes-gcm = "0.9"
 windows = "0.19"
 
 [target.'cfg(macos)'.dependencies]
+aes = "0.7"
+block-modes = "0.8"
 security-framework = "2.4"
 
 [profile.release]
