@@ -2,12 +2,18 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ExtractorError {
+    #[cfg(target_os = "windows")]
     #[error("Unable to decode base64")]
     Base64Error(#[from] base64::DecodeError),
 
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 
+    #[cfg(target_os = "macos")]
+    #[error("Mac security error: {0}")]
+    MacOsSecurityError(#[from] security_framework::base::Error),
+
+    #[cfg(target_os = "windows")]
     #[error("JSON error: {0}")]
     JsonError(#[from] serde_json::Error),
 

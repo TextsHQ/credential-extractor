@@ -31,12 +31,12 @@ base64 = "0.13"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
-[target.'cfg(windows)'.build-dependencies]
+[target.'cfg(target_os = "windows")'.build-dependencies]
 windows = "0.19"
 
 ## Macos dependencies
 
-[target.'cfg(macos)'.dependencies]
+[target.'cfg(target_os = "macos")'.dependencies]
 aes = "0.7"
 block-modes = "0.8"
 security-framework = "2.4"
