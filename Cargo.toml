@@ -34,6 +34,8 @@ serde_json = "1"
 [target.'cfg(windows)'.build-dependencies]
 windows = "0.19"
 
+## Macos dependencies
+
 [target.'cfg(macos)'.dependencies]
 aes = "0.7"
 block-modes = "0.8"
