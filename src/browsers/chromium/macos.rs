@@ -53,12 +53,16 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
         .0
         .to_owned();
 
+    println!("Encryption key: {:?}", encryption_key);
+
     // derived key is used to decrypt the encrypted data
     let mut dk = [0u8; 16];
 
     let mut mac = Hmac::new(Sha1::new(), &encryption_key);
 
     pbkdf2(&mut mac, b"saltysalt", 1003, &mut dk);
+
+    println!("Derived key: {:?}", dk);
 
     let mut iv = [0u8; 16];
 
@@ -90,11 +94,18 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
                 continue;
             }
 
-            // Strip over "v10" versioning prefix
-            let decrypted_password =
-                std::str::from_utf8(cipher.clone().decrypt(&mut password_value[3..])?)
-                    .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
-                    .to_owned();
+            let decrypted_password = {
+                if password_value.len() > 0 {
+                    println!("Decrypting {}@{}: {:?}", username_value, origin_url, password_value);
+
+                    // Strip over "v10" versioning prefix
+                    std::str::from_utf8(cipher.clone().decrypt(&mut password_value[3..])?)
+                        .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
+                        .to_owned()
+                } else {
+                    "".to_owned()
+                }
+            };
 
             credentials.push(Credential {
                 url: origin_url,

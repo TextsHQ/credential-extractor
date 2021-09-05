@@ -115,18 +115,22 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
                 continue;
             }
 
-            // Prefix "v10" is used for AES-GCM encrypted passwords w/ length of 3
-            // https://source.chromium.org/chromium/chromium/src/+/master:components/os_crypt/os_crypt_win.cc;l=33
-            //
-            // Current nonce length is 96/8
-            // https://source.chromium.org/chromium/chromium/src/+/master:components/os_crypt/os_crypt_win.cc;l=30
-            //
-            // 3 + (96/8) = 15
-            let nonce = GenericArray::from_slice(&password_value[3..15]);
+            let decrypted_password = {
+                if password_value.len() > 0 {
+                    // Prefix "v10" is used for AES-GCM encrypted passwords w/ length of 3
+                    // https://source.chromium.org/chromium/chromium/src/+/master:components/os_crypt/os_crypt_win.cc;l=33
+                    //
+                    // Current nonce length is 96/8
+                    // https://source.chromium.org/chromium/chromium/src/+/master:components/os_crypt/os_crypt_win.cc;l=30
+                    //
+                    // 3 + (96/8) = 15
+                    let nonce = GenericArray::from_slice(&password_value[3..15]);
 
-            let decrypted_password = cipher
-                .decrypt(nonce, &password_value[15..])
-                .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?;
+                    cipher
+                        .decrypt(nonce, &password_value[15..])
+                        .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?
+                }
+            };
 
             credentials.push(Credential {
                 url: origin_url,
