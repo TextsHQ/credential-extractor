@@ -96,7 +96,7 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
 
             let decrypted_password = {
                 if password_value.len() > 0 {
-                    println!("Decrypting {}@{}: {:?}", username_value, origin_url, password_value);
+                    println!("Decrypting {}@{}: {}", username_value, origin_url, password_value.len());
 
                     // Strip over "v10" versioning prefix
                     std::str::from_utf8(cipher.clone().decrypt(&mut password_value[3..])?)
