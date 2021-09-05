@@ -1,5 +1,5 @@
-const { searchBrowserLoginCredentials } = require('../dist');
+const { browserLoginCredentials } = require('../dist');
 
 test('URL credentials search', () => {
-    console.log(searchBrowserLoginCredentials('https://mail.google.com/mail/u/0/'));
+    console.log(browserLoginCredentials());
 });

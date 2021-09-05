@@ -5,13 +5,13 @@ use super::Credential;
 #[cfg(target_os = "windows")]
 mod win;
 
-// #[cfg(target_os = "macos")]
+#[cfg(target_os = "macos")]
 mod macos;
 
-pub fn search_login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
+pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
     #[cfg(target_os = "windows")]
-    return win::search_login_credentials(url);
+    return win::login_credentials();
 
     #[cfg(target_os = "macos")]
-    return macos::search_login_credentials(url);
+    return macos::login_credentials();
 }

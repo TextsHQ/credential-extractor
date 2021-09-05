@@ -43,7 +43,7 @@ fn browser_directories() -> ExtractorResult<Vec<PathBuf>> {
     Ok(existing_paths)
 }
 
-pub fn search_login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
+pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
     let mut credentials = Vec::new();
 
     let keychain = SecKeychain::default()?;
@@ -76,10 +76,10 @@ pub fn search_login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
         )?;
 
         let mut stmt = login_data.prepare_cached(
-            "SELECT origin_url, username_value, password_value FROM logins WHERE origin_url = ?",
+            "SELECT origin_url, username_value, password_value FROM logins",
         )?;
 
-        let mut rows = stmt.query(&[&url])?;
+        let mut rows = stmt.query([])?;
 
         while let Some(row) = rows.next()? {
             let origin_url = row.get::<_, String>(0)?;

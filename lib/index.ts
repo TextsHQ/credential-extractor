@@ -1,5 +1,5 @@
 const {
-    searchLoginCredentials,
+    loginCredentials,
 } = require('../index.node');
 
 export interface Credential {
@@ -10,7 +10,7 @@ export interface Credential {
     password: string;
 }
 
-export function searchBrowserLoginCredentials(url: string): Credential[] {
-    return searchLoginCredentials(url);
+export function browserLoginCredentials(): Credential[] {
+    return loginCredentials();
 }
 

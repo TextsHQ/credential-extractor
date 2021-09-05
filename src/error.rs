@@ -41,6 +41,7 @@ pub enum ExtractorError {
     #[error("Unable to decrypt key using AES-GCM")]
     AESGCMCannotDecryptPassword,
 
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Unable to decrypt key using AES-CBC")]
     AESCBCCannotDecryptPassword,
 }
