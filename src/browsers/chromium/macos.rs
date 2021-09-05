@@ -7,6 +7,10 @@ use aes::Aes128;
 use block_modes::{BlockMode, Cbc};
 use block_modes::block_padding::Pkcs7;
 
+use crypto::pbkdf2::pbkdf2;
+use crypto::sha1::Sha1;
+use crypto::hmac::Hmac;
+
 use security_framework::os::macos::keychain::SecKeychain;
 
 use rusqlite::{Connection, OpenFlags};
@@ -14,10 +18,11 @@ use rusqlite::{Connection, OpenFlags};
 use crate::browsers::Credential;
 use crate::error::{ExtractorResult, ExtractorError};
 
+type Aes128Cbc = Cbc<Aes128, Pkcs7>;
+
 const KNOWN_BROWSER_PATHS: &[&str] = &[
     "Google/Chrome",
     // "Google/Chrome SxS",
-    "Chromium",
     "BraveSoftware/Brave-Browser",
     "Vivaldi",
 ];
@@ -45,6 +50,22 @@ pub fn search_login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
 
     let encryption_key = keychain.find_generic_password("Chrome Safe Storage", "Chrome")?.0.to_owned();
 
+    // derived key is used to decrypt the encrypted data
+    let mut dk = [0u8; 16];
+
+    let mut mac = Hmac::new(Sha1::new(), &encryption_key);
+
+    pbkdf2(&mut mac, b"saltysalt", 1003, &mut dk);
+
+    let mut iv = [0u8; 16];
+
+    // IV 16 bytes of space " "
+    for i in 0..16 {
+        iv[i] = b' ';
+    }
+
+    let cipher = Aes128Cbc::new_from_slices(&dk, &iv)?;
+
     for path in browser_directories()? {
         let login_data = Connection::open_with_flags(
             path.join(["Default", "Login Data"].iter().collect::<PathBuf>()),
@@ -60,8 +81,18 @@ pub fn search_login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
         while let Some(row) = rows.next()? {
             let origin_url = row.get::<_, String>(0)?;
             let username_value = row.get::<_, String>(1)?;
-            let password_value = row.get::<_, Vec<u8>>(2)?;
+            let mut password_value = row.get::<_, Vec<u8>>(2)?;
 
+            // Strip over "v10 versioning"
+            let decrypted_password = std::str::from_utf8(cipher.clone().decrypt(&mut password_value[3..])?)
+                .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
+                .to_owned();
+
+            credentials.push(Credential {
+                url: origin_url,
+                username: username_value,
+                password: decrypted_password,
+            });
         }
     }
 

@@ -11,7 +11,17 @@ pub enum ExtractorError {
 
     #[cfg(target_os = "macos")]
     #[error("Mac security error: {0}")]
-    MacOsSecurityError(#[from] security_framework::base::Error),
+    MacOSSecurityError(#[from] security_framework::base::Error),
+
+    // TODO: ALso linux
+    #[cfg(target_os = "macos")]
+    #[error("Invalid key IV length: {0}")]
+    InvalidKeyIvLength(#[from] block_modes::InvalidKeyIvLength),
+
+    // TODO: Also linux
+    #[cfg(target_os = "macos")]
+    #[error("Block mode error: {0}")]
+    BlockMode(#[from] block_modes::BlockModeError),
 
     #[cfg(target_os = "windows")]
     #[error("JSON error: {0}")]
@@ -30,6 +40,9 @@ pub enum ExtractorError {
     #[cfg(target_os = "windows")]
     #[error("Unable to decrypt key using AES-GCM")]
     AESGCMCannotDecryptPassword,
+
+    #[error("Unable to decrypt key using AES-CBC")]
+    AESCBCCannotDecryptPassword,
 }
 
 pub type ExtractorResult<T> = std::result::Result<T, ExtractorError>;

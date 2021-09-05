@@ -10,6 +10,7 @@ crate-type = ["cdylib"]
 [dependencies]
 dirs = "3"
 thiserror = "1"
+rust-crypto = "0.2"
 
 [dependencies.rusqlite]
 version = "0.25"
