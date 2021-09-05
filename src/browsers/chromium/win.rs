@@ -126,17 +126,19 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
                     // 3 + (96/8) = 15
                     let nonce = GenericArray::from_slice(&password_value[3..15]);
 
-                    cipher
+                    String::from_utf8(cipher
                         .decrypt(nonce, &password_value[15..])
+                        .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?)
                         .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?
+                } else {
+                    "".to_owned()
                 }
             };
 
             credentials.push(Credential {
                 url: origin_url,
                 username: username_value,
-                password: String::from_utf8(decrypted_password)
-                    .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?,
+                password: decrypted_password,
             });
         }
     }
