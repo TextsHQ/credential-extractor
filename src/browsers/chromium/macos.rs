@@ -4,19 +4,19 @@ use dirs::data_local_dir;
 
 use aes::Aes128;
 
-use block_modes::{BlockMode, Cbc};
 use block_modes::block_padding::Pkcs7;
+use block_modes::{BlockMode, Cbc};
 
+use crypto::hmac::Hmac;
 use crypto::pbkdf2::pbkdf2;
 use crypto::sha1::Sha1;
-use crypto::hmac::Hmac;
 
 use security_framework::os::macos::keychain::SecKeychain;
 
 use rusqlite::{Connection, OpenFlags};
 
 use crate::browsers::Credential;
-use crate::error::{ExtractorResult, ExtractorError};
+use crate::error::{ExtractorError, ExtractorResult};
 
 type Aes128Cbc = Cbc<Aes128, Pkcs7>;
 
@@ -48,7 +48,10 @@ pub fn search_login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
 
     let keychain = SecKeychain::default()?;
 
-    let encryption_key = keychain.find_generic_password("Chrome Safe Storage", "Chrome")?.0.to_owned();
+    let encryption_key = keychain
+        .find_generic_password("Chrome Safe Storage", "Chrome")?
+        .0
+        .to_owned();
 
     // derived key is used to decrypt the encrypted data
     let mut dk = [0u8; 16];
@@ -83,10 +86,11 @@ pub fn search_login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
             let username_value = row.get::<_, String>(1)?;
             let mut password_value = row.get::<_, Vec<u8>>(2)?;
 
-            // Strip over "v10 versioning"
-            let decrypted_password = std::str::from_utf8(cipher.clone().decrypt(&mut password_value[3..])?)
-                .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
-                .to_owned();
+            // Strip over "v10" versioning prefix
+            let decrypted_password =
+                std::str::from_utf8(cipher.clone().decrypt(&mut password_value[3..])?)
+                    .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
+                    .to_owned();
 
             credentials.push(Credential {
                 url: origin_url,
