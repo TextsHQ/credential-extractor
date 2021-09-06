@@ -78,7 +78,7 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
     Ok(credentials)
 }
 
-pub fn decrypt_credential(credential: &Credential) -> ExtractorResult<String> {
+pub fn decrypt_credential(credential: &mut Credential) -> ExtractorResult<String> {
     if credential.encrypted_password.len() <= 0 {
         return Ok("".to_string());
     }

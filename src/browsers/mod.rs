@@ -63,14 +63,14 @@ pub fn js_decrypt_credential(mut cx: FunctionContext) -> JsResult<JsString> {
     });
 
     // Reconstruct with minimal needed to decrypt
-    let credential = Credential {
+    let mut credential = Credential {
         browser: browser,
         url: "".to_string(),
         username: "".to_string(),
         encrypted_password,
     };
 
-    let decrypted_password = match chromium::decrypt_credential(&credential) {
+    let decrypted_password = match chromium::decrypt_credential(&mut credential) {
         Ok(decrypted_password) => decrypted_password,
         Err(e) => cx.throw_error(e.to_string())?,
     };
