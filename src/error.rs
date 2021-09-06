@@ -13,13 +13,11 @@ pub enum ExtractorError {
     #[error("Mac security error: {0}")]
     MacOSSecurityError(#[from] security_framework::base::Error),
 
-    // TODO: ALso linux
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Invalid key IV length: {0}")]
     InvalidKeyIvLength(#[from] block_modes::InvalidKeyIvLength),
 
-    // TODO: Also linux
-    #[cfg(target_os = "macos")]
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Block mode error: {0}")]
     BlockMode(#[from] block_modes::BlockModeError),
 

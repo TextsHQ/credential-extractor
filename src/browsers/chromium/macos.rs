@@ -30,7 +30,10 @@ pub fn decrypt_credential(
     let keychain = SecKeychain::default()?;
 
     let encryption_key = keychain
-        .find_generic_password(chromium_browser.macos_service, chromium_browser.macos_account)?
+        .find_generic_password(
+            chromium_browser.macos_service,
+            chromium_browser.macos_account,
+        )?
         .0
         .to_owned();
 
@@ -50,7 +53,9 @@ pub fn decrypt_credential(
 
     let cipher = Aes128Cbc::new_from_slices(&dk, &iv)?;
 
-    Ok(std::str::from_utf8(cipher.decrypt(&mut credential.encrypted_password[3..])?)
-        .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
-        .to_owned())
+    Ok(
+        std::str::from_utf8(cipher.decrypt(&mut credential.encrypted_password[3..])?)
+            .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
+            .to_owned(),
+    )
 }
