@@ -44,6 +44,9 @@ pub enum ExtractorError {
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Unable to decrypt key using AES-CBC")]
     AESCBCCannotDecryptPassword,
+
+    #[error("Invalid browser provided to decryptor")]
+    InvalidBrowser,
 }
 
 pub type ExtractorResult<T> = std::result::Result<T, ExtractorError>;

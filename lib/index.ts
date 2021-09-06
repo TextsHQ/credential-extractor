@@ -1,16 +1,23 @@
 const {
     loginCredentials,
+    decryptCredential,
 } = require('../index.node');
 
 export interface Credential {
-    url: string;
+    readonly browser: string;
 
-    username: string;
+    readonly url: string;
 
-    password: string;
+    readonly username: string;
+
+    readonly encrypted_password: Buffer;
 }
 
 export function browserLoginCredentials(): Credential[] {
     return loginCredentials();
+}
+
+export function browserDecryptCredential(credential: Credential): string {
+    return decryptCredential(credential);
 }
 

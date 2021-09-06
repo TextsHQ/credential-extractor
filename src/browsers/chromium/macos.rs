@@ -75,9 +75,8 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
             OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
         )?;
 
-        let mut stmt = login_data.prepare_cached(
-            "SELECT origin_url, username_value, password_value FROM logins",
-        )?;
+        let mut stmt = login_data
+            .prepare_cached("SELECT origin_url, username_value, password_value FROM logins")?;
 
         let mut rows = stmt.query([])?;
 
