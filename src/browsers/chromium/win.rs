@@ -12,15 +12,16 @@ mod bindings {
 use bindings::Windows::Win32::Security::CryptUnprotectData;
 use bindings::Windows::Win32::Security::Cryptography::Core::CRYPTOAPI_BLOB;
 
-use super::{LocalState, KNOWN_BROWSER};
+use super::browsers::ChromiumBrowser;
+use super::LocalState;
 
 use crate::browsers::Credential;
 use crate::error::{ExtractorError, ExtractorResult};
 
-pub fn decrypt_credential(credential: &Credential) -> ExtractorResult<String> {
-    let chromium_browser = KNOWN_BROWSER.iter().find(|b| b.name == credential.browser)
-        .ok_or(ExtractorError::InvalidBrowser)?;
-
+pub fn decrypt_credential(
+    chromium_browser: &ChromiumBrowser,
+    credential: &Credential,
+) -> ExtractorResult<String> {
     let mut path = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
     path.push(chromium_browser.paths.iter().collect::<PathBuf>());
     path.push("User Data");
@@ -71,8 +72,10 @@ pub fn decrypt_credential(credential: &Credential) -> ExtractorResult<String> {
     // 3 + (96/8) = 15
     let nonce = GenericArray::from_slice(&credential.encrypted_password[3..15]);
 
-    Ok(String::from_utf8(cipher
-        .decrypt(nonce, &credential.encrypted_password[15..])
-        .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?)
-        .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?)
+    Ok(String::from_utf8(
+        cipher
+            .decrypt(nonce, &credential.encrypted_password[15..])
+            .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?,
+    )
+    .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?)
 }

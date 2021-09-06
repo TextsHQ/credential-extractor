@@ -6,10 +6,10 @@ use dirs::data_local_dir;
 
 use rusqlite::{Connection, OpenFlags};
 
-#[cfg(target_os = "windows")]
-mod win;
 #[cfg(target_os = "macos")]
 mod macos;
+#[cfg(target_os = "windows")]
+mod win;
 
 mod browsers;
 use browsers::KNOWN_BROWSER;
@@ -83,9 +83,14 @@ pub fn decrypt_credential(credential: &Credential) -> ExtractorResult<String> {
         return Ok("".to_string());
     }
 
+    let chromium_browser = KNOWN_BROWSER
+        .iter()
+        .find(|b| b.name == credential.browser)
+        .ok_or(ExtractorError::InvalidBrowser)?;
+
     #[cfg(target_os = "windows")]
-    return win::decrypt_credential(credential);
+    return win::decrypt_credential(chromium_browser, credential);
 
     #[cfg(target_os = "macos")]
-    return macos::decrypt_credential(credential);
+    return macos::decrypt_credential(chromium_browser, credential);
 }

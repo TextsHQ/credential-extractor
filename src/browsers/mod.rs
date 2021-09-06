@@ -29,7 +29,8 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
         let mut encrypted_password = cx.buffer(credential.encrypted_password.len() as u32)?;
 
         cx.borrow_mut(&mut encrypted_password, |data| {
-            data.as_mut_slice().copy_from_slice(&credential.encrypted_password);
+            data.as_mut_slice()
+                .copy_from_slice(&credential.encrypted_password);
         });
 
         js_credential.set(&mut cx, "browser", browser)?;
@@ -46,11 +47,13 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
 pub fn js_decrypt_credential(mut cx: FunctionContext) -> JsResult<JsString> {
     let credential_obj = cx.argument::<JsObject>(0)?;
 
-    let browser = credential_obj.get(&mut cx, "browser")?
+    let browser = credential_obj
+        .get(&mut cx, "browser")?
         .downcast_or_throw::<JsString, _>(&mut cx)?
         .value(&mut cx);
 
-    let encrypted_password_handle = credential_obj.get(&mut cx, "encrypted_password")?
+    let encrypted_password_handle = credential_obj
+        .get(&mut cx, "encrypted_password")?
         .downcast_or_throw::<JsBuffer, _>(&mut cx)?;
 
     let mut encrypted_password = Vec::new();
