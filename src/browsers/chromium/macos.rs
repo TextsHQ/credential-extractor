@@ -50,7 +50,7 @@ pub fn decrypt_credential(
 
     let cipher = Aes128Cbc::new_from_slices(&dk, &iv)?;
 
-    Ok(std::str::from_utf8(cipher.decrypt(&mut password_value[3..])?)
+    Ok(std::str::from_utf8(cipher.decrypt(&mut credentials.encrypted_password[3..])?)
         .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
         .to_owned())
 }
