@@ -13,38 +13,19 @@ use crypto::sha1::Sha1;
 
 use security_framework::os::macos::keychain::SecKeychain;
 
-use rusqlite::{Connection, OpenFlags};
+use super::browsers::ChromiumBrowser;
 
 use crate::browsers::Credential;
 use crate::error::{ExtractorError, ExtractorResult};
 
 type Aes128Cbc = Cbc<Aes128, Pkcs7>;
 
-const KNOWN_BROWSER_PATHS: &[&str] = &[
-    "Google/Chrome",
-    // "Google/Chrome SxS",
-    "BraveSoftware/Brave-Browser",
-    "Vivaldi",
-];
-
-fn browser_directories() -> ExtractorResult<Vec<PathBuf>> {
-    let local_data_dir = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
-
-    let mut existing_paths = Vec::new();
-
-    for known_path in KNOWN_BROWSER_PATHS {
-        let dir = local_data_dir.join(known_path);
-
-        if dir.exists() {
-            existing_paths.push(dir);
-        }
-    }
-
-    Ok(existing_paths)
-}
-
-pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
-    let mut credentials = Vec::new();
+pub fn decrypt_credential(
+    chromium_browser: &ChromiumBrowser,
+    credential: &Credential,
+) -> ExtractorResult<String> {
+    let mut path = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
+    path.push(chromium_browser.paths.iter().collect::<PathBuf>());
 
     let keychain = SecKeychain::default()?;
 
@@ -69,40 +50,7 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
 
     let cipher = Aes128Cbc::new_from_slices(&dk, &iv)?;
 
-    for path in browser_directories()? {
-        let login_data = Connection::open_with_flags(
-            path.join(["Default", "Login Data"].iter().collect::<PathBuf>()),
-            OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
-        )?;
-
-        let mut stmt = login_data
-            .prepare_cached("SELECT origin_url, username_value, password_value FROM logins")?;
-
-        let mut rows = stmt.query([])?;
-
-        while let Some(row) = rows.next()? {
-            let origin_url = row.get::<_, String>(0)?;
-            let username_value = row.get::<_, String>(1)?;
-            let mut password_value = row.get::<_, Vec<u8>>(2)?;
-
-            let decrypted_password = {
-                if password_value.len() > 0 {
-                    // Strip over "v10" versioning prefix
-                    std::str::from_utf8(cipher.clone().decrypt(&mut password_value[3..])?)
-                        .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
-                        .to_owned()
-                } else {
-                    "".to_owned()
-                }
-            };
-
-            credentials.push(Credential {
-                url: origin_url,
-                username: username_value,
-                password: decrypted_password,
-            });
-        }
-    }
-
-    Ok(credentials)
+    Ok(std::str::from_utf8(cipher.decrypt(&mut password_value[3..])?)
+        .map_err(|_| ExtractorError::AESCBCCannotDecryptPassword)?
+        .to_owned())
 }
