@@ -11,6 +11,8 @@ use crypto::hmac::Hmac;
 use crypto::pbkdf2::pbkdf2;
 use crypto::sha1::Sha1;
 
+use keyring::Keyring;
+
 use super::browsers::ChromiumBrowser;
 
 use crate::browsers::Credential;
@@ -25,10 +27,16 @@ pub fn decrypt_credential(
     let mut path = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
     path.push(chromium_browser.paths.iter().collect::<PathBuf>());
 
+    let encryption_key = Keyring::new(
+        chromium_browser.service_name,
+        chromium_browser.linux_secret_application,
+    )
+    .get_password()?;
+
     // derived key is used to decrypt the encrypted data
     let mut dk = [0u8; 16];
 
-    let mut mac = Hmac::new(Sha1::new(), b"peanuts");
+    let mut mac = Hmac::new(Sha1::new(), &encryption_key);
 
     pbkdf2(&mut mac, b"saltysalt", 1, &mut dk);
 

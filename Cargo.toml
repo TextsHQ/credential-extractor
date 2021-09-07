@@ -43,13 +43,14 @@ windows = "0.19"
 aes = "0.7"
 block-modes = "0.8"
 rust-crypto = "0.2"
-security-framework = "2.4"
+keyring = "0.10"
 
 # Linux dependencies
 [target.'cfg(target_os = "linux")'.dependencies]
 aes = "0.7"
 block-modes = "0.8"
 rust-crypto = "0.2"
+keyring = "0.10"
 
 [profile.release]
 lto = "fat"

@@ -9,9 +9,9 @@ pub enum ExtractorError {
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 
-    #[cfg(target_os = "macos")]
-    #[error("Mac security error: {0}")]
-    MacOSSecurityError(#[from] security_framework::base::Error),
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    #[error("Keyring error: {0}")]
+    KeyringError(#[from] keyring::KeyringError),
 
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Invalid key IV length: {0}")]

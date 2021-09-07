@@ -5,8 +5,10 @@ pub const KNOWN_BROWSER: &[ChromiumBrowser] = &[
         paths: &["Google", "Chrome"],
         linux_paths: &["google-chrome"],
 
-        macos_service: "Chrome Safe Storage",
+        service_name: "Chrome Safe Storage",
+
         macos_account: "Chrome",
+        linux_secret_application: "google-chrome",
     },
     ChromiumBrowser {
         name: "Edge",
@@ -14,8 +16,10 @@ pub const KNOWN_BROWSER: &[ChromiumBrowser] = &[
         paths: &["Microsoft", "Edge"],
         linux_paths: &["microsoft-edge"],
 
-        macos_service: "",
+        service_name: "",
+
         macos_account: "",
+        linux_secret_application: "microsoft-edge",
     },
     ChromiumBrowser {
         name: "Brave",
@@ -23,8 +27,10 @@ pub const KNOWN_BROWSER: &[ChromiumBrowser] = &[
         paths: &["BraveSoftware", "Brave-Browser"],
         linux_paths: &["brave-browser"],
 
-        macos_service: "Brave Safe Storage",
+        service_name: "Brave Safe Storage",
+
         macos_account: "Brave",
+        linux_secret_application: "brave-browser",
     },
     ChromiumBrowser {
         name: "Vivaldi",
@@ -32,8 +38,10 @@ pub const KNOWN_BROWSER: &[ChromiumBrowser] = &[
         paths: &["Vivaldi"],
         linux_paths: &["vivaldi-stable"],
 
-        macos_service: "Vivaldi Safe Storage",
+        service_name: "Vivaldi Safe Storage",
+
         macos_account: "Vivaldi",
+        linux_secret_application: "vivaldi-stable",
     },
 ];
 
@@ -43,6 +51,8 @@ pub struct ChromiumBrowser {
     pub paths: &'static [&'static str],
     pub linux_paths: &'static [&'static str],
 
-    pub macos_service: &'static str,
+    pub service_name: &'static str,
+
     pub macos_account: &'static str,
+    pub linux_secret_application: &'static str,
 }
