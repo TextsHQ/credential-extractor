@@ -8,7 +8,7 @@ pub const KNOWN_BROWSER: &[ChromiumBrowser] = &[
         service_name: "Chrome Safe Storage",
 
         macos_account: "Chrome",
-        linux_secret_application: "google-chrome",
+        linux_secret_application: "chrome",
     },
     ChromiumBrowser {
         name: "Edge",
@@ -19,7 +19,7 @@ pub const KNOWN_BROWSER: &[ChromiumBrowser] = &[
         service_name: "",
 
         macos_account: "",
-        linux_secret_application: "microsoft-edge",
+        linux_secret_application: "edge",
     },
     ChromiumBrowser {
         name: "Brave",
@@ -30,7 +30,7 @@ pub const KNOWN_BROWSER: &[ChromiumBrowser] = &[
         service_name: "Brave Safe Storage",
 
         macos_account: "Brave",
-        linux_secret_application: "brave-browser",
+        linux_secret_application: "brave",
     },
     ChromiumBrowser {
         name: "Vivaldi",
@@ -41,7 +41,7 @@ pub const KNOWN_BROWSER: &[ChromiumBrowser] = &[
         service_name: "Vivaldi Safe Storage",
 
         macos_account: "Vivaldi",
-        linux_secret_application: "vivaldi-stable",
+        linux_secret_application: "vivaldi",
     },
 ];
 
