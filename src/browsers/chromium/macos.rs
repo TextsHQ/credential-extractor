@@ -11,7 +11,7 @@ use crypto::hmac::Hmac;
 use crypto::pbkdf2::pbkdf2;
 use crypto::sha1::Sha1;
 
-use keyring::Keyring;
+use security_framework::os::macos::keychain::SecKeychain;
 
 use super::browsers::ChromiumBrowser;
 
@@ -29,16 +29,18 @@ pub fn decrypt_credential(
 
     let keychain = SecKeychain::default()?;
 
-    let encryption_key = Keyring::new(
-        chromium_browser.service_name,
-        chromium_browser.macos_account,
-    )
-    .get_password()?;
+    let encryption_key = keychain
+        .find_generic_password(
+            chromium_browser.macos_service,
+            chromium_browser.macos_account,
+        )?
+        .0
+        .to_owned();
 
     // derived key is used to decrypt the encrypted data
     let mut dk = [0u8; 16];
 
-    let mut mac = Hmac::new(Sha1::new(), encryption_key.as_bytes());
+    let mut mac = Hmac::new(Sha1::new(), &encryption_key);
 
     pbkdf2(&mut mac, b"saltysalt", 1003, &mut dk);
 

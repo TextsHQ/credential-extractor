@@ -9,9 +9,17 @@ pub enum ExtractorError {
     #[error("IO error: {0}")]
     IoError(#[from] std::io::Error),
 
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
-    #[error("Keyring error: {0}")]
-    KeyringError(#[from] keyring::KeyringError),
+    #[cfg(target_os = "macos")]
+    #[error("Security framework error: {0}")]
+    SecurityFramework(#[from] security_framework::base::Error),
+
+    #[cfg(target_os = "linux")]
+    #[error("Linx secret service error: {0}")]
+    LinuxSecretService(#[from] secret_service::Error),
+
+    #[cfg(target_os = "linux")]
+    #[error("Cannot find secret service item")]
+    CannotFindSecretServiceItem,
 
     #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Invalid key IV length: {0}")]
