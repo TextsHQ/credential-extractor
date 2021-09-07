@@ -4,6 +4,7 @@ use serde::Deserialize;
 
 #[cfg(target_os = "linux")]
 use dirs::config_dir;
+#[cfg(not(target_os = "linux"))]
 use dirs::data_local_dir;
 
 use rusqlite::{Connection, OpenFlags};

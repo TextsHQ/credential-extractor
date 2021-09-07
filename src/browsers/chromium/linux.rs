@@ -30,7 +30,7 @@ pub fn decrypt_credential(
 
     let mut mac = Hmac::new(Sha1::new(), b"peanuts");
 
-    pbkdf2(&mut mac, b"saltysalt", 1003, &mut dk);
+    pbkdf2(&mut mac, b"saltysalt", 1, &mut dk);
 
     let mut iv = [0u8; 16];
 
