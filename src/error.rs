@@ -14,7 +14,7 @@ pub enum ExtractorError {
     SecurityFramework(#[from] security_framework::base::Error),
 
     #[cfg(target_os = "linux")]
-    #[error("Linx secret service error: {0}")]
+    #[error("Linux secret service error: {0}")]
     LinuxSecretService(#[from] secret_service::Error),
 
     #[cfg(target_os = "linux")]
