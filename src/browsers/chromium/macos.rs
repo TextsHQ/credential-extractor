@@ -31,7 +31,7 @@ pub fn decrypt_credential(
 
     let encryption_key = keychain
         .find_generic_password(
-            chromium_browser.macos_service,
+            chromium_browser.service_name,
             chromium_browser.macos_account,
         )?
         .0
