@@ -1,4 +1,5 @@
 use std::path::PathBuf;
+use std::collections::HashMap;
 
 use dirs::data_local_dir;
 
@@ -30,9 +31,11 @@ pub fn decrypt_credential(
     let ss = SecretService::new(EncryptionType::Dh)?;
     let collection = ss.get_default_collection()?;
 
-    let search_items = collection.search_items(
-        vec!["application", chromium_browser.linux_secret_application],
-    )?;
+    let mut attributes = HashMap::new();
+
+    attributes.insert("application", chromium_browser.linux_secret_application);
+
+    let search_items = collection.search_items(attributes)?;
 
     let item = match search_items.get(0) {
         Some(item) => item,
