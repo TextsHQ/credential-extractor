@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use serde::Deserialize;
 
+#[cfg(target_os = "linux")]
+use dirs::config_dir;
 use dirs::data_local_dir;
 
 use rusqlite::{Connection, OpenFlags};
@@ -10,6 +12,8 @@ use rusqlite::{Connection, OpenFlags};
 mod macos;
 #[cfg(target_os = "windows")]
 mod win;
+#[cfg(target_os = "linux")]
+mod linux;
 
 mod browsers;
 use browsers::KNOWN_BROWSER;
@@ -34,14 +38,20 @@ pub struct OSCrypt {
 }
 
 pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
+    #[cfg(not(target_os = "linux"))]
     let local_data_dir = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
+    #[cfg(target_os = "linux")]
+    let local_data_dir = config_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
 
     let mut credentials = Vec::new();
 
     for browser in KNOWN_BROWSER {
         // TODO: Handle multiple profiles
 
+        #[cfg(not(target_os = "linux"))]
         let mut dir = local_data_dir.join(browser.paths.iter().collect::<PathBuf>());
+        #[cfg(target_os = "linux")]
+        let mut dir = local_data_dir.join(browser.linux_paths.iter().collect::<PathBuf>());
 
         // Windows nests it one deeper.
         #[cfg(target_os = "windows")]
@@ -101,4 +111,7 @@ pub fn decrypt_credential(credential: &mut Credential) -> ExtractorResult<String
 
     #[cfg(target_os = "macos")]
     return macos::decrypt_credential(chromium_browser, credential);
+
+    #[cfg(target_os = "linux")]
+    return linux::decrypt_credential(chromium_browser, credential);
 }
