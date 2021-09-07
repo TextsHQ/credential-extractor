@@ -36,7 +36,7 @@ pub fn decrypt_credential(
     // derived key is used to decrypt the encrypted data
     let mut dk = [0u8; 16];
 
-    let mut mac = Hmac::new(Sha1::new(), &encryption_key);
+    let mut mac = Hmac::new(Sha1::new(), encryption_key.as_bytes());
 
     pbkdf2(&mut mac, b"saltysalt", 1, &mut dk);
 
