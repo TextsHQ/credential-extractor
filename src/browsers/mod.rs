@@ -13,7 +13,9 @@ pub struct Credential {
 }
 
 pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
-    let credentials = match chromium::login_credentials() {
+    let url = cx.argument::<JsString>(0)?.value(&mut cx);
+
+    let credentials = match chromium::login_credentials(&url) {
         Ok(credentials) => credentials,
         Err(e) => cx.throw_error(e.to_string())?,
     };

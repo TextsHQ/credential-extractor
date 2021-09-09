@@ -13,8 +13,8 @@ export interface Credential {
     readonly encrypted_password: Buffer;
 }
 
-export function browserLoginCredentials(): Credential[] {
-    return loginCredentials();
+export function browserLoginCredentials(url: string): Credential[] {
+    return loginCredentials(url);
 }
 
 export function browserDecryptCredential(credential: Credential): string {

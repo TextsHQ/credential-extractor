@@ -38,7 +38,7 @@ pub struct OSCrypt {
     pub encrypted_key: String,
 }
 
-pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
+pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
     #[cfg(not(target_os = "linux"))]
     let local_data_dir = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
     #[cfg(target_os = "linux")]
@@ -73,9 +73,9 @@ pub fn login_credentials() -> ExtractorResult<Vec<Credential>> {
             )?;
 
             let mut stmt = login_data
-                .prepare_cached("SELECT origin_url, username_value, password_value FROM logins")?;
+                .prepare_cached("SELECT origin_url, username_value, password_value FROM logins WHERE origin_url LIKE ? || '%'")?;
 
-            let mut rows = stmt.query([])?;
+            let mut rows = stmt.query(&[url])?;
 
             while let Some(row) = rows.next()? {
                 let origin_url = row.get::<_, String>(0)?;
