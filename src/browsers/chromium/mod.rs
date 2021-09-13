@@ -73,7 +73,7 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
             )?;
 
             let mut stmt = login_data
-                .prepare_cached("SELECT origin_url, username_value, password_value FROM logins WHERE origin_url LIKE ? || '%'")?;
+                .prepare_cached("SELECT origin_url, username_value, password_value FROM logins WHERE origin_url LIKE '%' || ? || '%'")?;
 
             let mut rows = stmt.query(&[url])?;
 
