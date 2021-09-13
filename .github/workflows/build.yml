@@ -1,0 +1,241 @@
+name: Build
+
+on:
+  push:
+    paths:
+      - 'release_build.txt'
+
+jobs:
+  linux:
+    name: Build Linux
+
+    env:
+      NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+    strategy:
+      matrix:
+        node-version: [ 14.x ]
+        target:
+          - x86_64-unknown-linux-gnu
+        include:
+          - target: x86_64-unknown-linux-gnu
+            architecture: x64
+
+    runs-on: ubuntu-latest
+
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - name: Configure git for private repos
+      env:
+        TOKEN: ${{ secrets.GH_TOKEN }}
+      run: git config --global url."https://${TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: cargo-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Cache cargo bin
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/bin
+        key: cargo-bin-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Cache cargo build
+      uses: actions/cache@v2
+      with:
+        path: target
+        key: cargo-build-target-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Install latest Rust stable
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        override: true
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: yarn --ignore-scripts
+
+    - name: Build
+      run: yarn build --target=${{ matrix.target }}
+
+    - name: Strip binary
+      run: strip builds/napi-6/index.node
+
+    # - name: Test
+    #   run: yarn test
+
+    - name: Publish
+      run: |
+        yarn package --target_arch=${{ matrix.architecture }}
+        yarn upload-binary
+
+  windows:
+    name: Build Windows
+
+    env:
+      NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+
+    strategy:
+      matrix:
+        node-version: [ 14.x ]
+        target:
+          - x86_64-pc-windows-msvc
+        include:
+          - target: x86_64-pc-windows-msvc
+            architecture: x64
+
+    runs-on: windows-latest
+
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - name: Configure git for private repos
+      env:
+        TOKEN: ${{ secrets.GH_TOKEN }}
+      run: git config --global url."https://${TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: cargo-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Cache cargo bin
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/bin
+        key: cargo-bin-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Cache cargo build
+      uses: actions/cache@v2
+      with:
+        path: target
+        key: cargo-build-target-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Install latest Rust stable
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        override: true
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: yarn --ignore-scripts
+
+    - name: Build
+      run: yarn build --target=${{ matrix.target }}
+
+    # - name: Test
+    #   run: yarn test
+
+    - name: Publish
+      run: |
+        yarn package --target_arch=${{ matrix.architecture }}
+        yarn upload-binary
+
+  macos:
+    name: Build MacOS
+
+    env:
+      NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      CARGO_NET_GIT_FETCH_WITH_CLI: true
+      SDKROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX11.1.sdk"
+
+    strategy:
+      matrix:
+        node-version: [ 14.x ]
+        target:
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+        include:
+          - target: x86_64-apple-darwin
+            architecture: x64
+          - target: aarch64-apple-darwin
+            architecture: arm64
+
+    runs-on: macos-latest
+
+    timeout-minutes: 30
+
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 1
+
+    - name: Configure git for private repos
+      env:
+        TOKEN: ${{ secrets.GH_TOKEN }}
+      run: git config --global url."https://${TOKEN}:x-oauth-basic@github.com/".insteadOf "https://github.com/"
+
+    - name: Cache cargo registry
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/registry
+        key: cargo-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Cache cargo bin
+      uses: actions/cache@v2
+      with:
+        path: ~/.cargo/bin
+        key: cargo-bin-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Cache cargo build
+      uses: actions/cache@v2
+      with:
+        path: target
+        key: cargo-build-target-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+
+    - name: Install latest Rust stable
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: ${{ matrix.target }}
+        override: true
+
+    - name: Use Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+
+    - name: Install dependencies
+      run: yarn --ignore-scripts
+
+    - name: Build
+      run: yarn build --target=${{ matrix.target }}
+
+    - name: Strip binary
+      run: strip -ru builds/napi-6/index.node
+
+    # Until GH action adds M1 runners, can't run aarch64 libs
+    # - name: Test
+    #   if: ${{ matrix.architecture == 'x64' }}
+    #   run: yarn test
+
+    - name: Publish
+      run: |
+        yarn package --target_arch=${{ matrix.architecture }}
+        yarn upload-binary

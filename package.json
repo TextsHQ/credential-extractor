@@ -5,7 +5,7 @@
     "main": "dist/index.js",
     "files": [
         "dist",
-        "index.node"
+        "builds"
     ],
     "repository": {
         "type": "git",
@@ -15,12 +15,13 @@
         "module_name": "index",
         "host": "https://github.com/TextsHQ/credential-extractor/releases/download/",
         "remote_path": "v{version}",
-        "module_path": ".",
-        "package_name": "credential-extractor-{node_abi}-{platform}-{arch}.tar.gz",
+        "module_path": "builds/napi-{napi_build_version}",
+        "package_name": "credential-extractor-{platform}-{arch}-napi-v{napi_build_version}.tar.gz",
+        "napi_versions": [6],
         "pkg_path": "."
     },
     "scripts": {
-        "build": "tsc && cargo-cp-artifact -nc index.node -- cargo build --message-format=json-render-diagnostics",
+        "build": "tsc && cargo-cp-artifact -nc builds/napi-6/index.node -- cargo build --message-format=json-render-diagnostics",
         "install": "node-pre-gyp install --fallback-to-build=false",
         "package": "node-pre-gyp package",
         "upload-binary": "node-pre-gyp-github publish",

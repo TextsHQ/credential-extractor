@@ -1,7 +1,7 @@
 const {
     loginCredentials,
     decryptCredential,
-} = require('../index.node');
+} = require('../builds/napi-6/index.node');
 
 export interface Credential {
     readonly browser: string;
