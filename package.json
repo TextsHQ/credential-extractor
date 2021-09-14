@@ -1,6 +1,6 @@
 {
     "name": "credential-extractor",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "description": "Extractors for credentials",
     "main": "dist/index.js",
     "files": [

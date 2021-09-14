@@ -241,7 +241,7 @@ dependencies = [
 
 [[package]]
 name = "credential-extractor"
-version = "0.0.1"
+version = "1.0.0"
 dependencies = [
  "aes 0.7.5",
  "aes-gcm",
