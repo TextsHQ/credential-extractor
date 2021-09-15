@@ -1,7 +1,7 @@
 {
     "name": "credential-extractor",
-    "version": "1.0.0",
-    "description": "Extractors for credentials",
+    "version": "1.0.1",
+    "description": "Extracts data from installed browsers",
     "main": "dist/index.js",
     "files": [
         "dist",
