@@ -5,23 +5,22 @@
     "main": "dist/index.js",
     "files": [
         "dist",
-        "builds"
+        "ce.node"
     ],
     "repository": {
         "type": "git",
         "url": "git+https://github.com/TextsHQ/credential-extractor.git"
     },
     "binary": {
-        "module_name": "index",
+        "module_name": "ce",
         "host": "https://github.com/TextsHQ/credential-extractor/releases/download/",
         "remote_path": "v{version}",
-        "module_path": "builds/napi-{napi_build_version}",
-        "package_name": "credential-extractor-{platform}-{arch}-napi-v{napi_build_version}.tar.gz",
-        "napi_versions": [6],
+        "module_path": ".",
+        "package_name": "credential-extractor-{platform}-{arch}-napi-v6.tar.gz",
         "pkg_path": "."
     },
     "scripts": {
-        "build": "tsc && cargo-cp-artifact -nc builds/napi-6/index.node -- cargo build --release --message-format=json-render-diagnostics",
+        "build": "tsc && cargo-cp-artifact -nc ce.node -- cargo build --release --message-format=json-render-diagnostics",
         "install": "node-pre-gyp install --fallback-to-build=false",
         "package": "node-pre-gyp package",
         "upload-binary": "node-pre-gyp-github publish",
