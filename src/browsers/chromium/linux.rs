@@ -1,5 +1,5 @@
-use std::path::PathBuf;
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 use dirs::data_local_dir;
 
@@ -12,7 +12,7 @@ use crypto::hmac::Hmac;
 use crypto::pbkdf2::pbkdf2;
 use crypto::sha1::Sha1;
 
-use secret_service::{SecretService, EncryptionType};
+use secret_service::{EncryptionType, SecretService};
 
 use super::browsers::ChromiumBrowser;
 

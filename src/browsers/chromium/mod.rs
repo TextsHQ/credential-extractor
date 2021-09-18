@@ -9,12 +9,12 @@ use dirs::data_local_dir;
 
 use rusqlite::{Connection, OpenFlags};
 
+#[cfg(target_os = "linux")]
+mod linux;
 #[cfg(target_os = "macos")]
 mod macos;
 #[cfg(target_os = "windows")]
 mod win;
-#[cfg(target_os = "linux")]
-mod linux;
 
 mod browsers;
 use browsers::KNOWN_BROWSER;
@@ -73,20 +73,36 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
             )?;
 
             let mut stmt = login_data
-                .prepare_cached("SELECT origin_url, username_value, password_value FROM logins WHERE origin_url LIKE '%' || ? || '%'")?;
+                .prepare_cached("SELECT origin_url, username_element, username_value, password_element, password_value FROM logins WHERE origin_url LIKE '%' || ? || '%'")?;
 
             let mut rows = stmt.query(&[url])?;
 
             while let Some(row) = rows.next()? {
                 let origin_url = row.get::<_, String>(0)?;
-                let username_value = row.get::<_, String>(1)?;
-                let password_value = row.get::<_, Vec<u8>>(2)?;
+                let username_element = row.get::<_, String>(1)?;
+                let username_value = row.get::<_, String>(2)?;
+                let password_element = row.get::<_, String>(3)?;
+                let password_value = row.get::<_, Vec<u8>>(4)?;
 
                 credentials.push(Credential {
                     browser: browser.name.to_string(),
                     url: origin_url,
-                    username: username_value,
+                    username: if username_value.is_empty() {
+                        None
+                    } else {
+                        Some(username_value)
+                    },
                     encrypted_password: password_value,
+                    username_element: if username_element.is_empty() {
+                        None
+                    } else {
+                        Some(username_element)
+                    },
+                    password_element: if password_element.is_empty() {
+                        None
+                    } else {
+                        Some(password_element)
+                    },
                 });
             }
         }

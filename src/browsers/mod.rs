@@ -7,9 +7,13 @@ pub struct Credential {
 
     pub url: String,
 
-    pub username: String,
+    pub username: Option<String>,
 
     pub encrypted_password: Vec<u8>,
+
+    pub username_element: Option<String>,
+
+    pub password_element: Option<String>,
 }
 
 pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
@@ -27,7 +31,6 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
 
         let browser = cx.string(&credential.browser);
         let url = cx.string(&credential.url);
-        let username = cx.string(&credential.username);
         let mut encrypted_password = cx.buffer(credential.encrypted_password.len() as u32)?;
 
         cx.borrow_mut(&mut encrypted_password, |data| {
@@ -37,8 +40,22 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
 
         js_credential.set(&mut cx, "browser", browser)?;
         js_credential.set(&mut cx, "url", url)?;
-        js_credential.set(&mut cx, "username", username)?;
         js_credential.set(&mut cx, "encrypted_password", encrypted_password)?;
+
+        if let Some(username) = &credential.username {
+            let username = cx.string(username);
+            js_credential.set(&mut cx, "username", username)?;
+        }
+
+        if let Some(username_element) = &credential.username_element {
+            let username_element = cx.string(username_element);
+            js_credential.set(&mut cx, "username_element", username_element)?;
+        }
+
+        if let Some(password_element) = &credential.password_element {
+            let password_element = cx.string(password_element);
+            js_credential.set(&mut cx, "password_element", password_element)?;
+        }
 
         js_credentials.set(&mut cx, i as u32, js_credential)?;
     }
@@ -68,8 +85,10 @@ pub fn js_decrypt_credential(mut cx: FunctionContext) -> JsResult<JsString> {
     let mut credential = Credential {
         browser: browser,
         url: "".to_string(),
-        username: "".to_string(),
+        username: None,
         encrypted_password,
+        username_element: None,
+        password_element: None,
     };
 
     let decrypted_password = match chromium::decrypt_credential(&mut credential) {
