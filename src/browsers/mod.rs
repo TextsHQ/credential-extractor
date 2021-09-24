@@ -43,7 +43,8 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
 
         js_credential.set(&mut cx, "browser", browser)?;
         js_credential.set(&mut cx, "url", url)?;
-        js_credential.set(&mut cx, "encrypted_password", encrypted_password)?;
+        js_credential.set(&mut cx, "password", encrypted_password)?;
+        // TODO: Is encrypted field
 
         if let Some(username) = &credential.username {
             let username = cx.string(username);
@@ -52,12 +53,12 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
 
         if let Some(username_element) = &credential.username_element {
             let username_element = cx.string(username_element);
-            js_credential.set(&mut cx, "username_element", username_element)?;
+            js_credential.set(&mut cx, "usernameElement", username_element)?;
         }
 
         if let Some(password_element) = &credential.password_element {
             let password_element = cx.string(password_element);
-            js_credential.set(&mut cx, "password_element", password_element)?;
+            js_credential.set(&mut cx, "passwordElement", password_element)?;
         }
 
         js_credentials.set(&mut cx, i as u32, js_credential)?;
