@@ -11,11 +11,13 @@ export interface Credential {
 
     readonly username?: string;
 
-    readonly encrypted_password: Buffer;
+    readonly password: Buffer | string;
 
-    readonly username_element?: string;
+    readonly passwordEncrypted: boolean;
 
-    readonly password_element?: string;
+    readonly usernameElement?: string;
+
+    readonly passwordElement?: string;
 }
 
 export function browserLoginCredentials(url: string): Credential[] {

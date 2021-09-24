@@ -2,6 +2,9 @@ use neon::prelude::*;
 
 mod chromium;
 
+#[cfg(target_os = "macos")]
+mod safari_keychain;
+
 pub struct Credential {
     pub browser: String,
 
