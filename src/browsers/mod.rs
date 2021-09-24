@@ -12,11 +12,16 @@ pub struct Credential {
 
     pub username: Option<String>,
 
-    pub encrypted_password: Vec<u8>,
+    pub password: Password,
 
     pub username_element: Option<String>,
 
     pub password_element: Option<String>,
+}
+
+pub enum Password {
+    Plaintext(String),
+    Encrypted(Vec<u8>),
 }
 
 pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
@@ -34,17 +39,33 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
 
         let browser = cx.string(&credential.browser);
         let url = cx.string(&credential.url);
-        let mut encrypted_password = cx.buffer(credential.encrypted_password.len() as u32)?;
 
-        cx.borrow_mut(&mut encrypted_password, |data| {
-            data.as_mut_slice()
-                .copy_from_slice(&credential.encrypted_password);
-        });
+        match credential.password {
+            Password::Encrypted(ref password) => {
+                let mut encrypted_password = cx.buffer(password.len() as u32)?;
+
+                cx.borrow_mut(&mut encrypted_password, |data| {
+                    data.as_mut_slice()
+                        .copy_from_slice(&password);
+                });
+
+                let t = cx.boolean(true);
+
+                js_credential.set(&mut cx, "password", encrypted_password)?;
+                js_credential.set(&mut cx, "passwordEncrypted", t)?;
+            }
+            Password::Plaintext(ref password) => {
+                let password = cx.string(password);
+
+                let t = cx.boolean(false);
+
+                js_credential.set(&mut cx, "password", password)?;
+                js_credential.set(&mut cx, "passwordEncrypted", t)?;
+            }
+        }
 
         js_credential.set(&mut cx, "browser", browser)?;
         js_credential.set(&mut cx, "url", url)?;
-        js_credential.set(&mut cx, "password", encrypted_password)?;
-        // TODO: Is encrypted field
 
         if let Some(username) = &credential.username {
             let username = cx.string(username);
@@ -76,7 +97,7 @@ pub fn js_decrypt_credential(mut cx: FunctionContext) -> JsResult<JsString> {
         .value(&mut cx);
 
     let encrypted_password_handle = credential_obj
-        .get(&mut cx, "encrypted_password")?
+        .get(&mut cx, "password")?
         .downcast_or_throw::<JsBuffer, _>(&mut cx)?;
 
     let mut encrypted_password = Vec::new();
@@ -86,16 +107,16 @@ pub fn js_decrypt_credential(mut cx: FunctionContext) -> JsResult<JsString> {
     });
 
     // Reconstruct with minimal needed to decrypt
-    let mut credential = Credential {
+    let credential = Credential {
         browser: browser,
         url: "".to_string(),
         username: None,
-        encrypted_password,
+        password: Password::Encrypted(encrypted_password),
         username_element: None,
         password_element: None,
     };
 
-    let decrypted_password = match chromium::decrypt_credential(&mut credential) {
+    let decrypted_password = match chromium::decrypt_credential(credential) {
         Ok(decrypted_password) => decrypted_password,
         Err(e) => cx.throw_error(e.to_string())?,
     };
