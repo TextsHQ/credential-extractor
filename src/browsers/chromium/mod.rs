@@ -1,3 +1,4 @@
+use std::env::temp_dir;
 use std::path::PathBuf;
 
 use serde::Deserialize;
@@ -23,7 +24,7 @@ use super::Credential;
 
 use crate::error::{ExtractorError, ExtractorResult};
 
-const TEMP_FILE: &str = "chromium.data";
+const TEMP_FILE: &str = "extractor.chromium.data";
 
 #[derive(Deserialize)]
 pub struct LocalState {
@@ -43,6 +44,8 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
     let local_data_dir = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
     #[cfg(target_os = "linux")]
     let local_data_dir = config_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
+
+    let tmp_chromium_data = temp_dir().join(TEMP_FILE);
 
     let mut credentials = Vec::new();
 
@@ -64,11 +67,11 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
             continue;
         }
 
-        std::fs::copy(&dir, TEMP_FILE)?;
+        std::fs::copy(&dir, &tmp_chromium_data)?;
 
         {
             let login_data = Connection::open_with_flags(
-                TEMP_FILE,
+                &tmp_chromium_data,
                 OpenFlags::SQLITE_OPEN_READ_ONLY | OpenFlags::SQLITE_OPEN_NO_MUTEX,
             )?;
 
@@ -107,7 +110,7 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
             }
         }
 
-        std::fs::remove_file(TEMP_FILE)?;
+        std::fs::remove_file(&tmp_chromium_data)?;
     }
 
     Ok(credentials)
