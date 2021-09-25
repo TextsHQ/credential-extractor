@@ -1,3 +1,6 @@
+#[cfg(target_os = "windows")]
+extern crate static_vcruntime;
+
 use neon::prelude::*;
 
 mod browsers;
