@@ -5,6 +5,7 @@ mod chromium;
 #[cfg(target_os = "macos")]
 mod safari_keychain;
 
+#[derive(Debug)]
 pub struct Credential {
     pub browser: String,
 
@@ -19,6 +20,7 @@ pub struct Credential {
     pub password_element: Option<String>,
 }
 
+#[derive(Debug)]
 pub enum Password {
     Plaintext(String),
     Encrypted(Vec<u8>),
@@ -27,10 +29,19 @@ pub enum Password {
 pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
     let url = cx.argument::<JsString>(0)?.value(&mut cx);
 
-    let credentials = match chromium::login_credentials(&url) {
-        Ok(credentials) => credentials,
-        Err(e) => cx.throw_error(e.to_string())?,
-    };
+    let browsers = [
+        chromium::login_credentials(&url),
+        #[cfg(target_os = "macos")]
+        safari_keychain::login_credentials(&url),
+    ];
+
+    println!("{:?}", browsers);
+
+    let credentials: Vec<&Credential> = browsers
+        .iter()
+        .filter_map(|c| c.as_ref().ok())
+        .flatten()
+        .collect();
 
     let js_credentials = JsArray::new(&mut cx, credentials.len() as u32);
 
