@@ -1,6 +1,7 @@
 use neon::prelude::*;
 
 mod chromium;
+mod firefox;
 
 #[cfg(target_os = "macos")]
 mod safari_keychain;
