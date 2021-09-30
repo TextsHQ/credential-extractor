@@ -32,11 +32,10 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
 
     let browsers = [
         chromium::login_credentials(&url),
+        firefox::login_credentials(&url),
         // #[cfg(target_os = "macos")]
         // safari_keychain::login_credentials(&url),
     ];
-
-    println!("{:?}", browsers);
 
     let credentials: Vec<&Credential> = browsers
         .iter()
