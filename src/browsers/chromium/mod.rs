@@ -129,7 +129,7 @@ pub fn decrypt_credential(credential: Credential) -> ExtractorResult<String> {
 
             #[cfg(target_os = "linux")]
             return linux::decrypt_credential(chromium_browser, encrypted_password);
-        },
+        }
         Password::Plaintext(password) => {
             return Ok(password);
         }

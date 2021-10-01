@@ -56,8 +56,7 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
                 let mut encrypted_password = cx.buffer(password.len() as u32)?;
 
                 cx.borrow_mut(&mut encrypted_password, |data| {
-                    data.as_mut_slice()
-                        .copy_from_slice(&password);
+                    data.as_mut_slice().copy_from_slice(&password);
                 });
 
                 let t = cx.boolean(true);
