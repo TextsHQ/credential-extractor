@@ -21,11 +21,9 @@ pub enum ExtractorError {
     #[error("Cannot find secret service item")]
     CannotFindSecretServiceItem,
 
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Invalid key IV length: {0}")]
     InvalidKeyIvLength(#[from] block_modes::InvalidKeyIvLength),
 
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Block mode error: {0}")]
     BlockMode(#[from] block_modes::BlockModeError),
 
@@ -35,6 +33,12 @@ pub enum ExtractorError {
 
     #[error("Sqlite error: {0}")]
     SqliteError(#[from] rusqlite::Error),
+
+    #[error("ASN1 Ber error: {0}")]
+    BerError(#[from] der_parser::error::BerError),
+
+    #[error("Ber error: {0}")]
+    BerErrorNom(#[from] der_parser::nom::Err<der_parser::error::BerError>),
 
     #[error("Cannot find local data directory")]
     CannotFindLocalDataDirectory,
@@ -53,6 +57,9 @@ pub enum ExtractorError {
 
     #[error("Invalid browser provided to decryptor")]
     InvalidBrowser,
+
+    #[error("Malformed data")]
+    MalformedData,
 }
 
 pub type ExtractorResult<T> = std::result::Result<T, ExtractorError>;
