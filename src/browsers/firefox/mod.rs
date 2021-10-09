@@ -12,7 +12,7 @@ use crypto::hmac::Hmac;
 use crypto::pbkdf2::pbkdf2;
 use crypto::sha1::Sha1;
 
-use dirs::data_local_dir;
+use dirs::preference_dir;
 
 use serde_json::from_str;
 
@@ -24,7 +24,7 @@ mod browsers;
 use browsers::KNOWN_BROWSER;
 
 mod logins;
-use logins::LoginsFile;
+use logins::{Login, LoginsFile};
 
 use super::{Credential, Password};
 
@@ -32,6 +32,8 @@ use crate::error::{ExtractorError, ExtractorResult};
 
 type Aes256Cbc = Cbc<Aes256, NoPadding>;
 type TripleDesCbc = Cbc<TdesEde3, NoPadding>;
+
+static CKA_ID: &[u8; 16] = b"\xf8\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01";
 
 pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
     let mut credentials = Vec::new();
@@ -56,14 +58,69 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
             },
         )?;
 
+        let check_password = get_clear_value(&item2_der, &global_salt)?;
+
+        if check_password != b"password-check" {
+            panic!("malformed");
+            return Err(ExtractorError::MalformedData);
+        }
+
+        let (a11, a102) = key4_db.query_row("SELECT a11, a102 FROM nssPrivate", [], |row| {
+            let a11: Vec<u8> = row.get(0)?;
+            let a102: Vec<u8> = row.get(1)?;
+
+            Ok((a11, a102))
+        })?;
+
+        let key = if a102 == CKA_ID {
+            get_clear_value(&a11, &global_salt)?
+        } else {
+            return Err(ExtractorError::MalformedData);
+        };
+
         let logins: LoginsFile = from_str(&read_to_string(logins)?)?;
+
+        for login in logins.logins {
+            println!("{:?}", login.hostname);
+
+            // if !login.hostname.contains(&url) {
+            //     continue;
+            // }
+
+            match decrypt_login(&login, &key) {
+                Ok((username, password)) => {
+                    credentials.push(Credential {
+                        browser: "Firefox".to_string(), // TODO: Check if this is sufficient
+                        url: login.hostname,
+                        username: Some(username),
+                        password: Password::Plaintext(password),
+                        username_element: login.username_field,
+                        password_element: login.password_field,
+                    });
+                }
+                Err(_) => continue,
+            }
+        }
     }
 
     Ok(credentials)
 }
 
+fn decrypt_login(login: &Login, key: &[u8]) -> ExtractorResult<(String, String)> {
+    let encrypted_username_raw = base64::decode(&login.encrypted_username)?;
+    let encrypted_password_raw = base64::decode(&login.encrypted_password)?;
+
+    let (_, enc_user) = der_parser::ber::parse_ber(&encrypted_username_raw)?;
+    let (_, enc_pass) = der_parser::ber::parse_ber(&encrypted_password_raw)?;
+
+    let username = String::from_utf8(decrypt_3des(&enc_user, key)?)?;
+    let password = String::from_utf8(decrypt_3des(&enc_pass, key)?)?;
+
+    Ok((username, password))
+}
+
 fn firefox_profiles() -> ExtractorResult<Vec<PathBuf>> {
-    let local_data_dir = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
+    let local_data_dir = preference_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
 
     let mut profiles = Vec::new();
 

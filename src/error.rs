@@ -40,6 +40,9 @@ pub enum ExtractorError {
     #[error("Ber error: {0}")]
     BerErrorNom(#[from] der_parser::nom::Err<der_parser::error::BerError>),
 
+    #[error("Invalid UTF 8 string: {0}")]
+    InvalidUTF8String(#[from] std::string::FromUtf8Error),
+
     #[error("Cannot find local data directory")]
     CannotFindLocalDataDirectory,
 
