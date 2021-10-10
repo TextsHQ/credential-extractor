@@ -25,6 +25,10 @@ export function browserLoginCredentials(url: string): Credential[] {
 }
 
 export function browserDecryptCredential(credential: Credential): string {
-    return decryptCredential(credential);
+    if (credential.passwordEncrypted) {
+        return decryptCredential(credential);
+    }
+
+    return credential.password as string;
 }
 
