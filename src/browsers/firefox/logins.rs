@@ -2,9 +2,6 @@ use serde::Deserialize;
 
 #[derive(Deserialize)]
 pub struct LoginsFile {
-    #[serde(rename = "nextId")]
-    pub next_id: u32,
-
     pub logins: Vec<Login>,
 }
 

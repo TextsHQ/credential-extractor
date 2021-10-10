@@ -8,9 +8,8 @@ use des::TdesEde3;
 use block_modes::block_padding::NoPadding;
 use block_modes::{BlockMode, Cbc};
 
-use crypto::hmac::Hmac;
-use crypto::pbkdf2::pbkdf2;
-use crypto::sha1::Sha1;
+use sha1::Sha1;
+use ring::pbkdf2::PBKDF2_HMAC_SHA256;
 
 use dirs::preference_dir;
 
@@ -60,8 +59,7 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
 
         let check_password = get_clear_value(&item2_der, &global_salt)?;
 
-        if check_password != b"password-check" {
-            panic!("malformed");
+        if check_password != b"password-check\x02\x02" {
             return Err(ExtractorError::MalformedData);
         }
 
@@ -81,11 +79,9 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
         let logins: LoginsFile = from_str(&read_to_string(logins)?)?;
 
         for login in logins.logins {
-            println!("{:?}", login.hostname);
-
-            // if !login.hostname.contains(&url) {
-            //     continue;
-            // }
+            if !login.hostname.contains(&url) {
+                continue;
+            }
 
             match decrypt_login(&login, &key) {
                 Ok((username, password)) => {
@@ -203,12 +199,20 @@ fn get_value_pbes2(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorRes
         .map_err(|_| ExtractorError::MalformedData)?;
 
     if key_length == 32 {
-        let mut mac = Hmac::new(Sha1::new(), &global_salt);
+        let mut k_hasher = Sha1::new();
+        k_hasher.update(global_salt);
 
         // we know the key is 32 bytes in advance
         let mut key = vec![0u8; 32];
 
-        pbkdf2(&mut mac, entry_salt, iteration_count, &mut key);
+        let k = k_hasher.digest().bytes();
+        ring::pbkdf2::derive(
+            PBKDF2_HMAC_SHA256,
+            std::num::NonZeroU32::new(iteration_count).ok_or(ExtractorError::MalformedData)?,
+            entry_salt,
+            &k,
+            &mut key,
+        );
 
         let iv_header = [0x04, 0x0e];
         let mut iv = Vec::with_capacity(iv_header.len() + iv_body.len());
