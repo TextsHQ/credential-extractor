@@ -2,7 +2,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ExtractorError {
-    #[cfg(target_os = "windows")]
     #[error("Unable to decode base64")]
     Base64Error(#[from] base64::DecodeError),
 
