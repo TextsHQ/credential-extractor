@@ -27,7 +27,6 @@ pub enum ExtractorError {
     #[error("Block mode error: {0}")]
     BlockMode(#[from] block_modes::BlockModeError),
 
-    #[cfg(target_os = "windows")]
     #[error("JSON error: {0}")]
     JsonError(#[from] serde_json::Error),
 
