@@ -11,7 +11,12 @@ use block_modes::{BlockMode, Cbc};
 use sha1::Sha1;
 use ring::pbkdf2::PBKDF2_HMAC_SHA256;
 
+#[cfg(target_os = "macos")]
+use dirs::config_dir;
+#[cfg(not(target_os = "linux"))]
 use dirs::preference_dir;
+#[cfg(target_os = "linux")]
+use dirs::home_dir;
 
 use serde_json::from_str;
 
@@ -116,12 +121,22 @@ fn decrypt_login(login: &Login, key: &[u8]) -> ExtractorResult<(String, String)>
 }
 
 fn firefox_profiles() -> ExtractorResult<Vec<PathBuf>> {
+    #[cfg(target_os = "windows")]
     let local_data_dir = preference_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
+    #[cfg(target_os = "macos")]
+    let local_data_dir = config_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
+    #[cfg(target_os = "linux")]
+    let local_data_dir = home_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
 
     let mut profiles = Vec::new();
 
     for browser in KNOWN_BROWSER {
+        #[cfg(target_os = "windows")]
         let profile_dir = local_data_dir.join(browser.paths.iter().collect::<PathBuf>());
+        #[cfg(target_os = "macos")]
+        let profile_dir = local_data_dir.join(browser.macos_paths.iter().collect::<PathBuf>());
+        #[cfg(target_os = "linux")]
+        let profile_dir = local_data_dir.join(browser.linux_paths.iter().collect::<PathBuf>());
 
         for entry in read_dir(&profile_dir)? {
             if let Ok(entry) = entry {
