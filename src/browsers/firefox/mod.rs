@@ -157,6 +157,50 @@ fn firefox_profiles() -> ExtractorResult<Vec<PathBuf>> {
     Ok(profiles)
 }
 
+fn new_decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorResult<Vec<u8>> {
+    let algorithm = decoded_item[0][0].as_oid()?.to_string();
+
+    match algorithm.as_str() {
+        // pbeWithSha1AndTripleDES-CBC
+        //
+        // This algorithm is extremely peculiar and a beast of its own.
+        "1.2.840.113549.1.12.5.1.3" => {
+            let entry_salt = decoded_item[0][1][0].as_slice()?;
+            let cipher_type = decoded_item[1].as_slice()?;
+
+            let hashed_password = {
+                let mut s = Sha1::new();
+                s.update(global_salt);
+                s.digest().bytes()
+            };
+
+            // Pad until 20 bytes
+            let mut padded_entry_salt = entry_salt.to_owned();
+            padded_entry_salt.resize(20, 0);
+
+            let combined_hashed_password = {
+                let mut t: Vec<u8> = Vec::with_capacity(hashed_password.len() + padded_entry_salt.len());
+                t.extend_from_slice(&hashed_password);
+                t.extend_from_slice(&padded_entry_salt);
+
+                let mut s = Sha1::new();
+                s.update(&t);
+
+                s.digest().bytes()
+            };
+        }
+
+        // pkcs5 pbes2
+        "1.2.840.113549.1.5.13" => {
+
+        }
+
+        _ => return Err(ExtractorError::MalformedData),
+    }
+
+    unimplemented!()
+}
+
 fn decrypt_3des(decoded_item: &BerObject, key: &[u8]) -> ExtractorResult<Vec<u8>> {
     if decoded_item[1][0].as_oid()?.to_id_string() == "1.2.840.113549.3.7" {
         let iv = decoded_item[1][1].as_slice()?;

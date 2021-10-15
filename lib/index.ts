@@ -18,6 +18,8 @@ export interface Credential {
     readonly usernameElement?: string;
 
     readonly passwordElement?: string;
+
+    // TODO: numbers of times used if available
 }
 
 export function browserLoginCredentials(url: string): Credential[] {
