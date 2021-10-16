@@ -242,7 +242,7 @@ fn decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorResult
             };
 
             let des_key = &k[..24];
-            let iv = &k[24..];
+            let iv = &k[k.len() - 8..];
 
             let cipher = TripleDesCbc::new_from_slices(des_key, iv)?;
 
