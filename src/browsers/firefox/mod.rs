@@ -8,19 +8,21 @@ use des::TdesEde3;
 use block_modes::block_padding::NoPadding;
 use block_modes::{BlockMode, Cbc};
 
-use sha1::Sha1;
 use ring::pbkdf2::PBKDF2_HMAC_SHA256;
+use sha1::Sha1;
 
 #[cfg(target_os = "macos")]
 use dirs::config_dir;
-#[cfg(not(target_os = "linux"))]
-use dirs::preference_dir;
 #[cfg(target_os = "linux")]
 use dirs::home_dir;
+#[cfg(not(target_os = "linux"))]
+use dirs::preference_dir;
 
 use serde_json::from_str;
 
 use rusqlite::{Connection, OpenFlags};
+
+use ring::hmac;
 
 use der_parser::ber::BerObject;
 
@@ -179,7 +181,8 @@ fn new_decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorRe
             padded_entry_salt.resize(20, 0);
 
             let combined_hashed_password = {
-                let mut t: Vec<u8> = Vec::with_capacity(hashed_password.len() + padded_entry_salt.len());
+                let mut t: Vec<u8> =
+                    Vec::with_capacity(hashed_password.len() + padded_entry_salt.len());
                 t.extend_from_slice(&hashed_password);
                 t.extend_from_slice(&padded_entry_salt);
 
@@ -188,17 +191,93 @@ fn new_decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorRe
 
                 s.digest().bytes()
             };
+
+            let hmac_key = hmac::Key::new(
+                hmac::HMAC_SHA1_FOR_LEGACY_USE_ONLY,
+                &combined_hashed_password,
+            );
+
+            let k1 = {
+                let mut msg = Vec::with_capacity(padded_entry_salt.len() + entry_salt.len());
+                msg.extend_from_slice(&padded_entry_salt);
+                msg.extend_from_slice(&entry_salt);
+
+                hmac::sign(&hmac_key, &msg).as_ref().to_owned()
+            };
+
+            let tk = hmac::sign(&hmac_key, &padded_entry_salt)
+                .as_ref()
+                .to_owned();
+
+            let k2 = {
+                let mut msg = Vec::with_capacity(tk.len() + entry_salt.len());
+                msg.extend_from_slice(&tk);
+                msg.extend_from_slice(&entry_salt);
+
+                hmac::sign(&hmac_key, &msg).as_ref().to_owned()
+            };
+
+            let k = {
+                let mut msg = Vec::with_capacity(k1.len() + k2.len());
+                msg.extend_from_slice(&k1);
+                msg.extend_from_slice(&k2);
+
+                msg
+            };
+
+            let des_key = &k[..24];
+            let iv = &k[24..];
+
+            let cipher = TripleDesCbc::new_from_slices(des_key, iv)?;
+
+            return Ok(cipher.decrypt_vec(&cipher_type)?);
         }
 
         // pkcs5 pbes2
         "1.2.840.113549.1.5.13" => {
+            let entry_salt = decoded_item[0][1][0][1][0].as_slice()?;
 
+            let iteration_count = decoded_item[0][1][0][1][1].as_u32()?;
+
+            let key_length = decoded_item[0][1][0][1][2].as_u32()?;
+
+            let cipher_txt = decoded_item[1].as_slice()?;
+
+            let iv_body = decoded_item[0][1][1][1].as_slice()?;
+
+            if key_length == 32 {
+                let mut k_hasher = Sha1::new();
+                k_hasher.update(global_salt);
+
+                // we know the key is 32 bytes in advance
+                let mut key = vec![0u8; 32];
+
+                let k = k_hasher.digest().bytes();
+                ring::pbkdf2::derive(
+                    PBKDF2_HMAC_SHA256,
+                    std::num::NonZeroU32::new(iteration_count)
+                        .ok_or(ExtractorError::MalformedData)?,
+                    entry_salt,
+                    &k,
+                    &mut key,
+                );
+
+                let iv_header = [0x04, 0x0e];
+                let mut iv = Vec::with_capacity(iv_header.len() + iv_body.len());
+                iv.extend_from_slice(&iv_header);
+                iv.extend_from_slice(iv_body);
+
+                let key_cipher = Aes256Cbc::new_from_slices(&key, &iv)?;
+                let value = key_cipher.decrypt_vec(&cipher_txt)?;
+
+                return Ok(value);
+            } else {
+                return Err(ExtractorError::MalformedData);
+            }
         }
 
         _ => return Err(ExtractorError::MalformedData),
     }
-
-    unimplemented!()
 }
 
 fn decrypt_3des(decoded_item: &BerObject, key: &[u8]) -> ExtractorResult<Vec<u8>> {
