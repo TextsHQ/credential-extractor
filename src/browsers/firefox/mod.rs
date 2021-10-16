@@ -113,11 +113,8 @@ fn decrypt_login(login: &Login, key: &[u8]) -> ExtractorResult<(String, String)>
     let encrypted_username_raw = base64::decode(&login.encrypted_username)?;
     let encrypted_password_raw = base64::decode(&login.encrypted_password)?;
 
-    let (_, enc_user) = der_parser::ber::parse_ber(&encrypted_username_raw)?;
-    let (_, enc_pass) = der_parser::ber::parse_ber(&encrypted_password_raw)?;
-
-    let username = String::from_utf8(decrypt_3des(&enc_user, key)?)?;
-    let password = String::from_utf8(decrypt_3des(&enc_pass, key)?)?;
+    let username = String::from_utf8(get_clear_value(&encrypted_username_raw, &key)?)?;
+    let password = String::from_utf8(get_clear_value(&encrypted_password_raw, &key)?)?;
 
     Ok((username, password))
 }
@@ -159,7 +156,13 @@ fn firefox_profiles() -> ExtractorResult<Vec<PathBuf>> {
     Ok(profiles)
 }
 
-fn new_decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorResult<Vec<u8>> {
+fn get_clear_value(raw_ber: &[u8], global_salt: &[u8]) -> ExtractorResult<Vec<u8>> {
+    let (_, decoded_item) = der_parser::der::parse_der(raw_ber)?;
+
+    decrypt_3des(&decoded_item, global_salt)
+}
+
+fn decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorResult<Vec<u8>> {
     let algorithm = decoded_item[0][0].as_oid()?.to_string();
 
     match algorithm.as_str() {
@@ -230,6 +233,7 @@ fn new_decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorRe
 
             let cipher = TripleDesCbc::new_from_slices(des_key, iv)?;
 
+            // TODO: Check if it needs truncation?
             return Ok(cipher.decrypt_vec(&cipher_type)?);
         }
 
@@ -277,91 +281,5 @@ fn new_decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorRe
         }
 
         _ => return Err(ExtractorError::MalformedData),
-    }
-}
-
-fn decrypt_3des(decoded_item: &BerObject, key: &[u8]) -> ExtractorResult<Vec<u8>> {
-    if decoded_item[1][0].as_oid()?.to_id_string() == "1.2.840.113549.3.7" {
-        let iv = decoded_item[1][1].as_slice()?;
-        let enc_data = decoded_item[2].as_slice()?;
-
-        let cipher = TripleDesCbc::new_from_slices(&key[0..24], iv)?;
-
-        let mut raw_clear_data = cipher
-            .decrypt_vec(enc_data)
-            .map_err(|_| ExtractorError::MalformedData)?;
-
-        if let Some(&last) = raw_clear_data.last() {
-            let last = usize::from(last);
-            raw_clear_data.truncate(raw_clear_data.len().saturating_sub(last));
-            Ok(raw_clear_data)
-        } else {
-            Err(ExtractorError::MalformedData)
-        }
-    } else {
-        Err(ExtractorError::MalformedData)
-    }
-}
-
-fn get_clear_value(raw_ber: &[u8], global_salt: &[u8]) -> ExtractorResult<Vec<u8>> {
-    let (_, item2_decoded) = der_parser::der::parse_der(raw_ber)?;
-
-    let algorithm = item2_decoded[0][0].as_oid().unwrap().to_id_string();
-
-    if algorithm == "1.2.840.113549.1.5.13" {
-        get_value_pbes2(&item2_decoded, &global_salt)
-    } else {
-        Err(ExtractorError::MalformedData)
-    }
-}
-
-fn get_value_pbes2(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorResult<Vec<u8>> {
-    let entry_salt = decoded_item[0][1][0][1][0]
-        .as_slice()
-        .map_err(|_| ExtractorError::MalformedData)?;
-
-    let iteration_count = decoded_item[0][1][0][1][1]
-        .as_u32()
-        .map_err(|_| ExtractorError::MalformedData)?;
-
-    let key_length = decoded_item[0][1][0][1][2]
-        .as_u32()
-        .map_err(|_| ExtractorError::MalformedData)?;
-
-    let cipher_txt = decoded_item[1]
-        .as_slice()
-        .map_err(|_| ExtractorError::MalformedData)?;
-
-    let iv_body = decoded_item[0][1][1][1]
-        .as_slice()
-        .map_err(|_| ExtractorError::MalformedData)?;
-
-    if key_length == 32 {
-        let mut k_hasher = Sha1::new();
-        k_hasher.update(global_salt);
-
-        // we know the key is 32 bytes in advance
-        let mut key = vec![0u8; 32];
-
-        let k = k_hasher.digest().bytes();
-        ring::pbkdf2::derive(
-            PBKDF2_HMAC_SHA256,
-            std::num::NonZeroU32::new(iteration_count).ok_or(ExtractorError::MalformedData)?,
-            entry_salt,
-            &k,
-            &mut key,
-        );
-
-        let iv_header = [0x04, 0x0e];
-        let mut iv = Vec::with_capacity(iv_header.len() + iv_body.len());
-        iv.extend_from_slice(&iv_header);
-        iv.extend_from_slice(iv_body);
-
-        let key_cipher = Aes256Cbc::new_from_slices(&key, &iv)?;
-        let value = key_cipher.decrypt_vec(&cipher_txt)?;
-
-        Ok(value)
-    } else {
-        Err(ExtractorError::MalformedData)
     }
 }
