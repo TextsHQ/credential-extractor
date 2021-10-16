@@ -162,7 +162,15 @@ fn decrypt(raw_item: &[u8], key: &[u8]) -> ExtractorResult<String> {
 
     let cipher = TripleDesCbc::new_from_slices(&key[0..24], iv)?;
 
-    Ok(String::from_utf8(cipher.decrypt_vec(&ciphertext)?)?)
+    let mut data = cipher.decrypt_vec(&ciphertext)?;
+
+    if let Some(&last) = data.last() {
+        data.truncate(data.len().saturating_sub(last as usize));
+
+        Ok(String::from_utf8(data)?)
+    } else {
+        Err(ExtractorError::MalformedData)
+    }
 }
 
 fn decrypt_login(login: &Login, key: &[u8]) -> ExtractorResult<(String, String)> {
@@ -246,7 +254,6 @@ fn decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorResult
 
             let cipher = TripleDesCbc::new_from_slices(des_key, iv)?;
 
-            // TODO: Check if it needs truncation?
             return Ok(cipher.decrypt_vec(&cipher_type)?);
         }
 
