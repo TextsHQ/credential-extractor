@@ -109,16 +109,6 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
     Ok(credentials)
 }
 
-fn decrypt_login(login: &Login, key: &[u8]) -> ExtractorResult<(String, String)> {
-    let encrypted_username_raw = base64::decode(&login.encrypted_username)?;
-    let encrypted_password_raw = base64::decode(&login.encrypted_password)?;
-
-    let username = String::from_utf8(get_clear_value(&encrypted_username_raw, &key)?)?;
-    let password = String::from_utf8(get_clear_value(&encrypted_password_raw, &key)?)?;
-
-    Ok((username, password))
-}
-
 fn firefox_profiles() -> ExtractorResult<Vec<PathBuf>> {
     #[cfg(target_os = "windows")]
     let local_data_dir = preference_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
@@ -160,6 +150,29 @@ fn get_clear_value(raw_ber: &[u8], global_salt: &[u8]) -> ExtractorResult<Vec<u8
     let (_, decoded_item) = der_parser::der::parse_der(raw_ber)?;
 
     decrypt_3des(&decoded_item, global_salt)
+}
+
+#[inline]
+fn decrypt(raw_item: &[u8], key: &[u8]) -> ExtractorResult<String> {
+    let (_, item) = der_parser::der::parse_der(raw_item)?;
+
+    // let key_id = item[0].as_slice()?;
+    let iv = item[1][1].as_slice()?;
+    let ciphertext = item[2].as_slice()?;
+
+    let cipher = TripleDesCbc::new_from_slices(&key[0..24], iv)?;
+
+    Ok(String::from_utf8(cipher.decrypt_vec(&ciphertext)?)?)
+}
+
+fn decrypt_login(login: &Login, key: &[u8]) -> ExtractorResult<(String, String)> {
+    let encrypted_username_raw = base64::decode(&login.encrypted_username)?;
+    let encrypted_password_raw = base64::decode(&login.encrypted_password)?;
+
+    let username = decrypt(&encrypted_username_raw, key)?;
+    let password = decrypt(&encrypted_password_raw, key)?;
+
+    Ok((username, password))
 }
 
 fn decrypt_3des(decoded_item: &BerObject, global_salt: &[u8]) -> ExtractorResult<Vec<u8>> {
