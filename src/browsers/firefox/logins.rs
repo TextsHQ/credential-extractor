@@ -37,4 +37,7 @@ pub struct Login {
 
     #[serde(rename = "timeLastUsed")]
     pub time_last_used: u64,
+
+    #[serde(rename = "timesUsed")]
+    pub times_used: u64,
 }

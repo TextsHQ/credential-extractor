@@ -19,6 +19,8 @@ pub struct Credential {
     pub username_element: Option<String>,
 
     pub password_element: Option<String>,
+
+    pub times_used: Option<u64>,
 }
 
 #[derive(Debug)]
@@ -92,6 +94,11 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
             js_credential.set(&mut cx, "passwordElement", password_element)?;
         }
 
+        if let Some(times_used) = &credential.times_used {
+            let times_used = cx.number(*times_used as f64);
+            js_credential.set(&mut cx, "timesUsed", times_used)?;
+        }
+
         js_credentials.set(&mut cx, i as u32, js_credential)?;
     }
 
@@ -124,6 +131,7 @@ pub fn js_decrypt_credential(mut cx: FunctionContext) -> JsResult<JsString> {
         password: Password::Encrypted(encrypted_password),
         username_element: None,
         password_element: None,
+        times_used: None,
     };
 
     let decrypted_password = match chromium::decrypt_credential(credential) {

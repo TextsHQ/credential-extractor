@@ -106,6 +106,7 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
                     } else {
                         Some(password_element)
                     },
+                    times_used: None,
                 });
             }
         }

@@ -99,9 +99,10 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
                         password: Password::Plaintext(password),
                         username_element: login.username_field,
                         password_element: login.password_field,
+                        times_used: Some(login.times_used),
                     });
                 }
-                Err(_) => continue,
+                Err(e) => panic!("{:?}", e),
             }
         }
     }
