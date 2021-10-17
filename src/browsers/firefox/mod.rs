@@ -102,7 +102,7 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
                         times_used: Some(login.times_used),
                     });
                 }
-                Err(e) => panic!("{:?}", e),
+                Err(_) => continue,
             }
         }
     }
