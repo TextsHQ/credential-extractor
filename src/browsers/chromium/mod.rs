@@ -20,7 +20,7 @@ mod win;
 mod browsers;
 use browsers::KNOWN_BROWSER;
 
-use super::Credential;
+use super::{Credential, Password};
 
 use crate::error::{ExtractorError, ExtractorResult};
 
@@ -95,7 +95,7 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
                     } else {
                         Some(username_value)
                     },
-                    encrypted_password: password_value,
+                    password: Password::Encrypted(password_value),
                     username_element: if username_element.is_empty() {
                         None
                     } else {
@@ -106,6 +106,7 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
                     } else {
                         Some(password_element)
                     },
+                    times_used: None,
                 });
             }
         }
@@ -116,22 +117,29 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
     Ok(credentials)
 }
 
-pub fn decrypt_credential(credential: &mut Credential) -> ExtractorResult<String> {
-    if credential.encrypted_password.len() <= 0 {
-        return Ok("".to_string());
+pub fn decrypt_credential(credential: Credential) -> ExtractorResult<String> {
+    match credential.password {
+        Password::Encrypted(ref encrypted_password) => {
+            if encrypted_password.is_empty() {
+                return Ok("".to_string());
+            }
+
+            let chromium_browser = KNOWN_BROWSER
+                .iter()
+                .find(|b| b.name == credential.browser)
+                .ok_or(ExtractorError::InvalidBrowser)?;
+
+            #[cfg(target_os = "windows")]
+            return win::decrypt_credential(chromium_browser, encrypted_password);
+
+            #[cfg(target_os = "macos")]
+            return macos::decrypt_credential(chromium_browser, encrypted_password);
+
+            #[cfg(target_os = "linux")]
+            return linux::decrypt_credential(chromium_browser, encrypted_password);
+        }
+        Password::Plaintext(password) => {
+            return Ok(password);
+        }
     }
-
-    let chromium_browser = KNOWN_BROWSER
-        .iter()
-        .find(|b| b.name == credential.browser)
-        .ok_or(ExtractorError::InvalidBrowser)?;
-
-    #[cfg(target_os = "windows")]
-    return win::decrypt_credential(chromium_browser, credential);
-
-    #[cfg(target_os = "macos")]
-    return macos::decrypt_credential(chromium_browser, credential);
-
-    #[cfg(target_os = "linux")]
-    return linux::decrypt_credential(chromium_browser, credential);
 }

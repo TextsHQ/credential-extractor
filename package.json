@@ -20,7 +20,8 @@
         "pkg_path": "."
     },
     "scripts": {
-        "build": "tsc && cargo-cp-artifact -nc ce.node -- cargo build --release --message-format=json-render-diagnostics",
+        "build-rust": "cargo-cp-artifact -nc ce.node -- cargo build --message-format=json-render-diagnostics",
+        "build": "tsc && yarn build-rust --release",
         "install": "node-pre-gyp install --fallback-to-build=false",
         "package": "node-pre-gyp package",
         "upload-binary": "node-pre-gyp-github publish",

@@ -2,7 +2,6 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum ExtractorError {
-    #[cfg(target_os = "windows")]
     #[error("Unable to decode base64")]
     Base64Error(#[from] base64::DecodeError),
 
@@ -21,20 +20,26 @@ pub enum ExtractorError {
     #[error("Cannot find secret service item")]
     CannotFindSecretServiceItem,
 
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Invalid key IV length: {0}")]
     InvalidKeyIvLength(#[from] block_modes::InvalidKeyIvLength),
 
-    #[cfg(any(target_os = "macos", target_os = "linux"))]
     #[error("Block mode error: {0}")]
     BlockMode(#[from] block_modes::BlockModeError),
 
-    #[cfg(target_os = "windows")]
     #[error("JSON error: {0}")]
     JsonError(#[from] serde_json::Error),
 
     #[error("Sqlite error: {0}")]
     SqliteError(#[from] rusqlite::Error),
+
+    #[error("ASN1 Ber error: {0}")]
+    BerError(#[from] der_parser::error::BerError),
+
+    #[error("Ber error: {0}")]
+    BerErrorNom(#[from] der_parser::nom::Err<der_parser::error::BerError>),
+
+    #[error("Invalid UTF 8 string: {0}")]
+    InvalidUTF8String(#[from] std::string::FromUtf8Error),
 
     #[error("Cannot find local data directory")]
     CannotFindLocalDataDirectory,
@@ -53,6 +58,9 @@ pub enum ExtractorError {
 
     #[error("Invalid browser provided to decryptor")]
     InvalidBrowser,
+
+    #[error("Malformed data")]
+    MalformedData,
 }
 
 pub type ExtractorResult<T> = std::result::Result<T, ExtractorError>;
