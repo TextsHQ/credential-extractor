@@ -16,7 +16,6 @@ use secret_service::{EncryptionType, SecretService};
 
 use super::browsers::ChromiumBrowser;
 
-use crate::browsers::Credential;
 use crate::error::{ExtractorError, ExtractorResult};
 
 type Aes128Cbc = Cbc<Aes128, Pkcs7>;

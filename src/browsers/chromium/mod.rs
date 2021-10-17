@@ -120,6 +120,10 @@ pub fn login_credentials(url: &str) -> ExtractorResult<Vec<Credential>> {
 pub fn decrypt_credential(credential: Credential) -> ExtractorResult<String> {
     match credential.password {
         Password::Encrypted(ref encrypted_password) => {
+            if encrypted_password.is_empty() {
+                return Ok("".to_string());
+            }
+
             let chromium_browser = KNOWN_BROWSER
                 .iter()
                 .find(|b| b.name == credential.browser)
