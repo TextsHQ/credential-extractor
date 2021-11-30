@@ -1,6 +1,6 @@
 [package]
 name = "credential-extractor"
-version = "1.2.0"
+version = "1.2.1"
 authors = ["rumblefrog <contact@zhenyangli.me>"]
 edition = "2018"
 
@@ -55,5 +55,6 @@ security-framework = "2.4"
 secret-service = "2"
 
 [profile.release]
+opt-level = "z"
 lto = "fat"
 codegen-units = 1

@@ -1,2 +1,4 @@
 [target.'cfg(all(windows, target_env = "msvc"))']
 rustflags = ["-C", "target-feature=+crt-static"]
+[target.'cfg(all(linux, target_env = "gnu"))']
+rustflags = ["-C", "target-feature=+crt-static"]
