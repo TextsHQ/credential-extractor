@@ -24,7 +24,7 @@
         "build": "tsc && yarn build-rust --release",
         "install": "node-pre-gyp install --fallback-to-build=false",
         "package": "node-pre-gyp package",
-        "upload-binary": "node-pre-gyp-github publish",
+        "upload-binary": "node-pre-gyp-github publish --release",
         "test": "jest"
     },
     "devDependencies": {
