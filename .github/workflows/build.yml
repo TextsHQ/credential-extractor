@@ -163,7 +163,6 @@ jobs:
     env:
       NODE_PRE_GYP_GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       CARGO_NET_GIT_FETCH_WITH_CLI: true
-      SDKROOT: "/Library/Developer/CommandLineTools/SDKs/MacOSX11.1.sdk"
 
     strategy:
       matrix:

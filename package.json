@@ -24,7 +24,7 @@
         "build": "tsc && yarn build-rust --release",
         "install": "concurrently \"npggha\" \"HTTP_PROXY=http://localhost:9191 node-pre-gyp install --fallback-to-build=false\"",
         "package": "node-pre-gyp package",
-        "upload-binary": "node-pre-gyp-github publish --release",
+        "upload-binary": "node-pre-gyp-github publish",
         "test": "jest"
     },
     "devDependencies": {
