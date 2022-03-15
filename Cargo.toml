@@ -1,6 +1,6 @@
 [package]
 name = "credential-extractor"
-version = "1.2.2"
+version = "1.2.3"
 authors = ["rumblefrog <contact@zhenyangli.me>"]
 edition = "2018"
 
