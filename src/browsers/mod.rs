@@ -29,6 +29,15 @@ pub enum Password {
     Encrypted(Vec<u8>),
 }
 
+impl Password {
+    pub fn len(&self) -> usize {
+        match self {
+            Password::Plaintext(s) => s.len(),
+            Password::Encrypted(v) => v.len(),
+        }
+    }
+}
+
 pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
     let url = cx.argument::<JsString>(0)?.value(&mut cx);
 
@@ -43,6 +52,7 @@ pub fn js_login_credentials(mut cx: FunctionContext) -> JsResult<JsArray> {
         .iter()
         .filter_map(|c| c.as_ref().ok())
         .flatten()
+        .filter(|i| i.password.len() > 0)
         .collect();
 
     let js_credentials = JsArray::new(&mut cx, credentials.len() as u32);
