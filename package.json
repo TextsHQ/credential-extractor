@@ -33,7 +33,7 @@
         "concurrently": "^6.4.0",
         "jest": "^27.0.4",
         "node-pre-gyp-github": "https://github.com/rumblefrog/node-pre-gyp-github.git",
-        "npggha": "https://github.com/rumblefrog/npggha",
+        "npggha": "https://github.com/TextsHQ/npggha",
         "typescript": "^4.3.2"
     },
     "dependencies": {
