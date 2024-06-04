@@ -30,7 +30,7 @@
     "devDependencies": {
         "@types/jest": "^26.0.23",
         "cargo-cp-artifact": "^0.1",
-        "concurrently": "^6.4.0",
+        "concurrently": "^8.2.2",
         "jest": "^27.0.4",
         "node-pre-gyp-github": "https://github.com/rumblefrog/node-pre-gyp-github.git",
         "npggha": "https://github.com/TextsHQ/npggha",
