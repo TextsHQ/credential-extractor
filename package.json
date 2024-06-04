@@ -22,7 +22,7 @@
     "scripts": {
         "build-rust": "cargo-cp-artifact -nc ce.node -- cargo build --message-format=json-render-diagnostics",
         "build": "tsc && yarn build-rust --release",
-        "install": "concurrently \"npggha\" \"HTTP_PROXY=http://localhost:9191 node-pre-gyp install --fallback-to-build=false\"",
+        "install": "node-pre-gyp install --fallback-to-build=false",
         "package": "node-pre-gyp package",
         "upload-binary": "node-pre-gyp-github publish",
         "test": "jest"
@@ -30,10 +30,8 @@
     "devDependencies": {
         "@types/jest": "^26.0.23",
         "cargo-cp-artifact": "^0.1",
-        "concurrently": "^8.2.2",
         "jest": "^27.0.4",
         "node-pre-gyp-github": "https://github.com/rumblefrog/node-pre-gyp-github.git",
-        "npggha": "https://github.com/TextsHQ/npggha",
         "typescript": "^4.3.2"
     },
     "dependencies": {
