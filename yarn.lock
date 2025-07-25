@@ -1374,12 +1374,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"cargo-cp-artifact@npm:^0.1":
-  version: 0.1.6
-  resolution: "cargo-cp-artifact@npm:0.1.6"
+"cargo-cp-artifact@npm:0.1.9":
+  version: 0.1.9
+  resolution: "cargo-cp-artifact@npm:0.1.9"
   bin:
     cargo-cp-artifact: bin/cargo-cp-artifact.js
-  checksum: 10/9d9fee14ac194149af7e1b5d18e6a28dc67e12e51eeb119914a9c4fb4e983fc81ed023787b7171118c953090f315b1e4bd8354a64eb0d3069331185adbe407d3
+  checksum: 10/51fcb9641cc025b39384163dce97b82be6af494bc215a70e197af0a01e30dc30173a56a383dd5dbf5b4b76785ab4e91649455128b2ed7d2c3ed3c27c79c7b632
   languageName: node
   linkType: hard
 
@@ -1579,7 +1579,7 @@ __metadata:
   resolution: "credential-extractor@workspace:."
   dependencies:
     "@types/jest": "npm:^26.0.23"
-    cargo-cp-artifact: "npm:^0.1"
+    cargo-cp-artifact: "npm:0.1.9"
     jest: "npm:^27.0.4"
     node-pre-gyp: "npm:^0.17.0"
     node-pre-gyp-github: "https://github.com/rumblefrog/node-pre-gyp-github.git"
