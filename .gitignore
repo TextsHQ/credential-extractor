@@ -9,3 +9,5 @@ dist
 *.node
 build
 .DS_Store
+
+.yarn/install-state.gz
