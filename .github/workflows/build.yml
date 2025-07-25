@@ -58,6 +58,7 @@ jobs:
     - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         target: ${{ matrix.target }}
+        rustflags: '' # don't fail on warnings
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
@@ -135,6 +136,7 @@ jobs:
     - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         target: ${{ matrix.target }}
+        rustflags: '' # don't fail on warnings
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
@@ -209,6 +211,7 @@ jobs:
     - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
         target: ${{ matrix.target }}
+        rustflags: '' # don't fail on warnings
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v2
