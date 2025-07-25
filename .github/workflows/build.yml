@@ -94,6 +94,7 @@ jobs:
     strategy:
       matrix:
         node-version: [ 16.x ]
+        target: [ x86_64-pc-windows-msvc, aarch64-pc-windows-msvc ]
         include:
           - os: windows-latest
             target: x86_64-pc-windows-msvc
