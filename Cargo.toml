@@ -33,9 +33,7 @@ branch = "main"
 default-features = false
 features = ["napi-6", "event-queue-api", "try-catch-api"]
 
-
-## Windows dependencies
-
+# windows
 [target.'cfg(windows)'.dependencies]
 windows = "0.19"
 aes-gcm = "0.9"
@@ -44,12 +42,15 @@ static_vcruntime = "1"
 [target.'cfg(target_os = "windows")'.build-dependencies]
 windows = "0.19"
 
-## Macos dependencies
+# !windows
+[target.'cfg(not(target_os = "windows"))'.dependencies]
+rust-crypto = "0.2"
 
+# macos
 [target.'cfg(target_os = "macos")'.dependencies]
 security-framework = "2.4"
 
-# Linux dependencies
+# linux
 [target.'cfg(target_os = "linux")'.dependencies]
 secret-service = "2"
 
