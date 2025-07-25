@@ -93,13 +93,15 @@ jobs:
     strategy:
       matrix:
         node-version: [ 16.x ]
-        target:
-          - x86_64-pc-windows-msvc
         include:
-          - target: x86_64-pc-windows-msvc
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
             architecture: x64
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            architecture: arm64
 
-    runs-on: windows-latest
+    runs-on: ${{ matrix.os }}
 
     timeout-minutes: 30
 
