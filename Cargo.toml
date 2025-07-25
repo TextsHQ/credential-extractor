@@ -16,7 +16,7 @@ aes = "0.7"
 des = "0.7"
 base64 = "0.13"
 block-modes = "0.8"
-ring = "0.16"
+ring = "0.17"
 sha1 = "0.6.0"
 
 [dependencies.serde]
