@@ -65,7 +65,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
 
     - name: Install dependencies
-      run: yarn --ignore-scripts
+      run: yarn install --mode=skip-build
 
     - name: Build
       run: yarn build --target=${{ matrix.target }}
@@ -142,7 +142,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
 
     - name: Install dependencies
-      run: yarn --ignore-scripts
+      run: yarn install --mode=skip-build
 
     - name: Build
       run: yarn build --target=${{ matrix.target }}
@@ -216,7 +216,7 @@ jobs:
         node-version: ${{ matrix.node-version }}
 
     - name: Install dependencies
-      run: yarn --ignore-scripts
+      run: yarn install --mode=skip-build
 
     - name: Build
       run: yarn build --target=${{ matrix.target }}
