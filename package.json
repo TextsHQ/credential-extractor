@@ -1,6 +1,6 @@
 {
     "name": "credential-extractor",
-    "version": "1.2.5",
+    "version": "1.2.6",
     "description": "Extracts data from installed browsers",
     "main": "dist/index.js",
     "files": [
