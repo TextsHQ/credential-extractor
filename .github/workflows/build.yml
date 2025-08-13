@@ -19,11 +19,16 @@ jobs:
         node-version: [ 22.x ]
         target:
           - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
         include:
           - target: x86_64-unknown-linux-gnu
+            os: ubuntu-24.04
             architecture: x64
+          - target: aarch64-unknown-linux-gnu
+            os: ubuntu-24.04-arm
+            architecture: arm64
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
 
     timeout-minutes: 30
 
@@ -41,19 +46,19 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ~/.cargo/registry
-        key: cargo-registry-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+        key: cargo-registry-${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
 
     - name: Cache cargo bin
       uses: actions/cache@v4
       with:
         path: ~/.cargo/bin
-        key: cargo-bin-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+        key: cargo-bin-${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
 
     - name: Cache cargo build
       uses: actions/cache@v4
       with:
         path: target
-        key: cargo-build-target-${{ runner.os }}-${{ hashFiles('Cargo.lock') }}
+        key: cargo-build-target-${{ matrix.os }}-${{ hashFiles('Cargo.lock') }}
 
     - uses: actions-rust-lang/setup-rust-toolchain@v1
       with:
